@@ -1,0 +1,8 @@
+.*.swp
+*.wlf
+*.vstf
+work
+Makefile
+modelsim.ini
+transcript
+

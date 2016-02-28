@@ -1,0 +1,9 @@
+add instance constraint 0 $ReconfSignalsReg/ValueShift_reg[0] -revised
+add instance constraint 0 $ReconfSignalsReg/ValueShift_reg[1] -revised
+add instance constraint 0 $ReconfSignalsReg/ValueShift_reg[2] -revised
+add instance constraint 0 $ReconfSignalsReg/ValueShift_reg[3] -revised
+add instance constraint 0 $ReconfSignalsReg/ValueShift_reg[4] -revised
+add instance constraint 0 $ReconfSignalsReg/ValueShift_reg[5] -revised
+add instance constraint 0 $ReconfSignalsReg/ValueShift_reg[6] -revised
+add instance constraint 0 $ReconfSignalsReg/ValueShift_reg[7] -revised
+add instance constraint 0 $ReconfSignalsReg/ValueShift_reg[8] -revised

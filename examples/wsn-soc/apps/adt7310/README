@@ -1,0 +1,7 @@
+ADT7310 -- Sensor Interface to Analog Devices ADT7310 SPI Temperature Sensor
+----------------------------------------------------------------------------
+
+ - 1st FSM to query one value from the sensor
+ - 2nd FSM to request a new measurement and compare with old value
+ - both FSMs are implemented in separte Verilog modules and combined in the
+   ADT7310 top module

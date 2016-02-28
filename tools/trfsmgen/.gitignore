@@ -1,0 +1,12 @@
+lib
+backup
+trfsmgen
+man
+*.lps
+*.res
+*.ppu
+s27.il
+s27.v
+s27-yosys.kiss
+
+

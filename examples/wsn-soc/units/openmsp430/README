@@ -1,0 +1,17 @@
+Import OpenMSP430
+-----------------
+
+svn checkout http://opencores.org/ocsvn/openmsp430/openmsp430/trunk/ svn
+cd verilog/
+cp ../svn/core/rtl/verilog/* .
+cp ../svn/core/rtl/verilog/periph/* .
+rm template*
+cd ..
+cd tb/
+cp ../svn/core/bench/verilog/*.v .
+cd ..
+
+File Lists and Dependencies
+---------------------------
+../svn/core/sim/rtl_sim/src/submit.f
+../svn/core/sim/rtl_sim/src/core.f

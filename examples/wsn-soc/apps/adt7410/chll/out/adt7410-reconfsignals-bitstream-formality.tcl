@@ -1,0 +1,9 @@
+set_constant -type cell {$ReconfSignalsReg/ValueShift_reg[0]} 1
+set_constant -type cell {$ReconfSignalsReg/ValueShift_reg[1]} 0
+set_constant -type cell {$ReconfSignalsReg/ValueShift_reg[2]} 0
+set_constant -type cell {$ReconfSignalsReg/ValueShift_reg[3]} 0
+set_constant -type cell {$ReconfSignalsReg/ValueShift_reg[4]} 0
+set_constant -type cell {$ReconfSignalsReg/ValueShift_reg[5]} 0
+set_constant -type cell {$ReconfSignalsReg/ValueShift_reg[6]} 0
+set_constant -type cell {$ReconfSignalsReg/ValueShift_reg[7]} 0
+set_constant -type cell {$ReconfSignalsReg/ValueShift_reg[8]} 0

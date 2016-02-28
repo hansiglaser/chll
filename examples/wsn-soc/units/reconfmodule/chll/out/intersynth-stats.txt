@@ -1,0 +1,14 @@
+Number of conntypes:    3
+Number of trees:        6
+Number of celltypes:   80
+Number of cells:       98
+Number of netlists:     6
+Number of unroutable netlists: 0
+Number of nodes per netlist:      26 ..   44
+Number of nets per netlist:       29 ..   64
+Number of up-links per switch:     0 ..   10
+Number of down-links per switch:   0 ..    6
+Number of up-ports per switch:     0 ..   25
+Number of down-ports per switch:   0 ..   18
+Interconnect config bits per cell port: 1208 / 220 =   5.49
+Interconnect mux2 per cell port:        2670 / 220 =  12.14

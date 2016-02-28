@@ -1,0 +1,54 @@
+netlist ExtADC
+node InstInReconfModuleIn_i_0 CellInReconfModuleIn_i_0 PORT Enable_i
+node InstOutReconfModuleIRQs_o_0 CellOutReconfModuleIRQs_o_0 PORT CpuIntr_o
+node InstOutOutputs_o_0 CellOutOutputs_o_0 PORT SensorPower_o
+node InstOutOutputs_o_1 CellOutOutputs_o_1 PORT SensorStart_o
+node InstInInputs_i_0 CellInInputs_i_0 PORT SensorReady_i
+node InstOutAdcDoConvert_o CellOutAdcDoConvert_o PORT AdcStart_o
+node InstInAdcConvComplete_i CellInAdcConvComplete_i PORT AdcDone_i
+node InstInAdcValue_i CellInAdcValue_i PORT AdcValue_i
+node InstParamIn_PeriodCounterPreset_i CellParamIn_Word PORT PeriodCounterPreset_i
+node InstParamOut_SensorValue_o CellParamOut_Word PORT SensorValue_o
+node InstParamIn_Threshold_i CellParamIn_Word PORT Threshold_i
+node $extract$\AbsDiff$726 AbsDiff A_i AdcValue_i B_i SensorValue_o D_o AbsDiffResult
+node $extract$\AddSubCmp_Greater_Direct$728.ThisAddSubCmp AddSubCmp A_i AbsDiffResult AddOrSub_i CONST_Bit_1 B_i Threshold_i Carry_i CONST_Bit_0 Carry_o $extract$\AddSubCmp_Greater_Direct$728.Carry_s Zero_o $extract$\AddSubCmp_Greater_Direct$728.Zero_s
+node $extract$\Counter_RV1_Timer$725.ThisCounter Counter Direction_i CONST_Bit_1 Enable_i TimerEnable PresetVal_i PeriodCounterPreset_i Preset_i TimerPreset ResetSig_i CONST_Bit_0 Zero_o TimerOvfl
+node $extract$\WordRegister$727 WordRegister D_i AdcValue_i Enable_i StoreNewValue Q_o SensorValue_o
+node TRFSM0_1 TRFSM0 In0_i AdcDone_i In1_i Enable_i In2_i SensorReady_i In3_i TimerOvfl In4_i $extract$\AddSubCmp_Greater_Direct$728.Carry_s In5_i $extract$\AddSubCmp_Greater_Direct$728.Zero_s Out0_o CpuIntr_o Out1_o SensorStart_o Out2_o StoreNewValue Out3_o AdcStart_o Out4_o SensorPower_o Out5_o TimerEnable Out6_o TimerPreset
+node InstCONST_Bit_1 CONST_Bit CfgValue_i '1 Value_o CONST_Bit_1
+node InstCONST_Bit_0 CONST_Bit CfgValue_i '0 Value_o CONST_Bit_0
+node unused-Counter-1 Counter
+node unused-WordRegister-1 WordRegister
+node unused-WordRegister-2 WordRegister
+node unused-AddSubCmp-1 AddSubCmp
+node unused-CellParamIn_Word-2 CellParamIn_Word
+node unused-CellParamIn_Word-3 CellParamIn_Word
+node unused-CellParamIn_Word-4 CellParamIn_Word
+node unused-CellParamOut_Word-1 CellParamOut_Word
+netlist ExtADC
+mapnode InstInReconfModuleIn_i_0 0
+mapnode InstOutReconfModuleIRQs_o_0 0
+mapnode InstOutOutputs_o_0 0
+mapnode InstOutOutputs_o_1 0
+mapnode InstInInputs_i_0 0
+mapnode InstOutAdcDoConvert_o 0
+mapnode InstInAdcConvComplete_i 0
+mapnode InstInAdcValue_i 0
+mapnode InstParamIn_PeriodCounterPreset_i 0
+mapnode InstParamOut_SensorValue_o 0
+mapnode InstParamIn_Threshold_i 1
+mapnode $extract$\AbsDiff$726 0
+mapnode $extract$\AddSubCmp_Greater_Direct$728.ThisAddSubCmp 0
+mapnode $extract$\Counter_RV1_Timer$725.ThisCounter 0
+mapnode $extract$\WordRegister$727 0
+mapnode TRFSM0_1 0
+mapnode InstCONST_Bit_1 1
+mapnode InstCONST_Bit_0 0
+mapnode unused-Counter-1 1
+mapnode unused-WordRegister-1 1
+mapnode unused-WordRegister-2 2
+mapnode unused-AddSubCmp-1 1
+mapnode unused-CellParamIn_Word-2 2
+mapnode unused-CellParamIn_Word-3 3
+mapnode unused-CellParamIn_Word-4 4
+mapnode unused-CellParamOut_Word-1 1

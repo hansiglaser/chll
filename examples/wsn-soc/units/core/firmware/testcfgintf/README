@@ -1,0 +1,2 @@
+This example requires msp-gcc. Install with
+  # apt-get install msp430mcu binutils-msp430 gcc-msp430 msp430-libc mspdebug

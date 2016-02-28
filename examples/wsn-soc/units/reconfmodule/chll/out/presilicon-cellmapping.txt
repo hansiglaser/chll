@@ -1,0 +1,184 @@
+setcellcount CellInAdcConvComplete_i 1
+setcellcount CellOutAdcDoConvert_o 1
+setcellcount CellInAdcValue_i 1
+setcellcount CellInI2C_Busy_i 1
+setcellcount CellOutI2C_DataIn_o 1
+setcellcount CellInI2C_DataOut_i 1
+setcellcount CellInI2C_Error_i 1
+setcellcount CellInI2C_FIFOEmpty_i 1
+setcellcount CellInI2C_FIFOFull_i 1
+setcellcount CellOutI2C_FIFOReadNext_o 1
+setcellcount CellOutI2C_FIFOWrite_o 1
+setcellcount CellOutI2C_ReadCount_o 1
+setcellcount CellOutI2C_ReceiveSend_n_o 1
+setcellcount CellOutI2C_StartProcess_o 1
+setcellcount CellInInputs_i_0 1
+setcellcount CellInInputs_i_1 1
+setcellcount CellInInputs_i_2 1
+setcellcount CellInInputs_i_3 1
+setcellcount CellInInputs_i_4 1
+setcellcount CellInInputs_i_5 1
+setcellcount CellInInputs_i_6 1
+setcellcount CellInInputs_i_7 1
+setcellcount CellOutOutputs_o_0 1
+setcellcount CellOutOutputs_o_1 1
+setcellcount CellOutOutputs_o_2 1
+setcellcount CellOutOutputs_o_3 1
+setcellcount CellOutOutputs_o_4 1
+setcellcount CellOutOutputs_o_5 1
+setcellcount CellOutOutputs_o_6 1
+setcellcount CellOutOutputs_o_7 1
+setcellcount CellOutReconfModuleIRQs_o_0 1
+setcellcount CellOutReconfModuleIRQs_o_1 1
+setcellcount CellOutReconfModuleIRQs_o_2 1
+setcellcount CellOutReconfModuleIRQs_o_3 1
+setcellcount CellOutReconfModuleIRQs_o_4 1
+setcellcount CellOutSPI_CPHA_o 1
+setcellcount CellOutSPI_CPOL_o 1
+setcellcount CellOutSPI_DataIn_o 1
+setcellcount CellInSPI_DataOut_i 1
+setcellcount CellInSPI_FIFOEmpty_i 1
+setcellcount CellInSPI_FIFOFull_i 1
+setcellcount CellOutSPI_LSBFE_o 1
+setcellcount CellOutSPI_ReadNext_o 1
+setcellcount CellInSPI_Transmission_i 1
+setcellcount CellOutSPI_Write_o 1
+setcellcount CellInReconfModuleIn_i_0 1
+setcellcount CellInReconfModuleIn_i_1 1
+setcellcount CellInReconfModuleIn_i_2 1
+setcellcount CellInReconfModuleIn_i_3 1
+setcellcount CellInReconfModuleIn_i_4 1
+setcellcount CellInReconfModuleIn_i_5 1
+setcellcount CellInReconfModuleIn_i_6 1
+setcellcount CellInReconfModuleIn_i_7 1
+setcellcount CellOutReconfModuleOut_o_0 1
+setcellcount CellOutReconfModuleOut_o_1 1
+setcellcount CellOutReconfModuleOut_o_2 1
+setcellcount CellOutReconfModuleOut_o_3 1
+setcellcount CellOutReconfModuleOut_o_4 1
+setcellcount CellOutReconfModuleOut_o_5 1
+setcellcount CellOutReconfModuleOut_o_6 1
+setcellcount CellOutReconfModuleOut_o_7 1
+setcellcount Counter 2
+setcellcount Counter32 2
+setcellcount AbsDiff 1
+setcellcount WordRegister 3
+setcellcount ByteRegister 2
+setcellcount AddSubCmp 2
+setcellcount ByteMuxOct 0
+setcellcount ByteMuxQuad 1
+setcellcount ByteMuxDual 2
+setcellcount Byte2Word 1
+setcellcount Byte2WordSel 1
+setcellcount WordMuxDual 2
+setcellcount TRFSM0 1
+setcellcount TRFSM1 1
+setcellcount CONST_Bit 2
+setcellcount CONST_Byte 6
+setcellcount CONST_Word 1
+setcellcount CellParamIn_Word 5
+setcellcount CellParamOut_Word 2
+setswitchsizes Bit 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 5 4 0 1 3 1 2 1 1 0 1 0 1 1 0 1 1 0 1 1 1 0 1 1 1 0 1 1 1 1 0 1 3 4 3 1 2
+setswitchsizes Bit 1 1 1 1 1 6 2 1 2 2 5 1 1 1 1 10 6 1 3 3 5 4 4 0 2 0 1 0 1 1 0 2 0 1 3 1 3 1 2 0 1 0 1 1 1 1 0 1 1 1 1 1 1
+setswitchsizes Byte 0 1 1 1 1 1 2 2 1 1 1 1 1 1 0
+setswitchsizes Byte 1 1 1 1 1 1 1 2 1 1 2 1 1 0 1
+setswitchsizes Word 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+setswitchsizes Word 1 1 1 1 1 1 1 1 1 1 1 2 1 1 2 1 1
+mapcell CellInAdcConvComplete_i 0 Bit 67 0
+mapcell CellOutAdcDoConvert_o 0 Bit 64 1
+mapcell CellInAdcValue_i 0 Word 0 4
+mapcell CellInI2C_Busy_i 0 Bit 8 2
+mapcell CellOutI2C_DataIn_o 0 Byte 8 0
+mapcell CellInI2C_DataOut_i 0 Byte 1 3
+mapcell CellInI2C_Error_i 0 Bit 1 3
+mapcell CellInI2C_FIFOEmpty_i 0 Bit 26 4
+mapcell CellInI2C_FIFOFull_i 0 Bit 56 5
+mapcell CellOutI2C_FIFOReadNext_o 0 Bit 6 6
+mapcell CellOutI2C_FIFOWrite_o 0 Bit 7 7
+mapcell CellOutI2C_ReadCount_o 0 Byte 11 2
+mapcell CellOutI2C_ReceiveSend_n_o 0 Bit 2 8
+mapcell CellOutI2C_StartProcess_o 0 Bit 9 9
+mapcell CellInInputs_i_0 0 Bit 69 10
+mapcell CellInInputs_i_1 0 Bit 11 11
+mapcell CellInInputs_i_2 0 Bit 12 12
+mapcell CellInInputs_i_3 0 Bit 13 13
+mapcell CellInInputs_i_4 0 Bit 14 14
+mapcell CellInInputs_i_5 0 Bit 15 15
+mapcell CellInInputs_i_6 0 Bit 16 16
+mapcell CellInInputs_i_7 0 Bit 17 17
+mapcell CellOutOutputs_o_0 0 Bit 62 67
+mapcell CellOutOutputs_o_1 0 Bit 59 19
+mapcell CellOutOutputs_o_2 0 Bit 20 20
+mapcell CellOutOutputs_o_3 0 Bit 21 21
+mapcell CellOutOutputs_o_4 0 Bit 22 22
+mapcell CellOutOutputs_o_5 0 Bit 23 23
+mapcell CellOutOutputs_o_6 0 Bit 24 24
+mapcell CellOutOutputs_o_7 0 Bit 25 25
+mapcell CellOutReconfModuleIRQs_o_0 0 Bit 72 28
+mapcell CellOutReconfModuleIRQs_o_1 0 Bit 27 18
+mapcell CellOutReconfModuleIRQs_o_2 0 Bit 28 26
+mapcell CellOutReconfModuleIRQs_o_3 0 Bit 29 29
+mapcell CellOutReconfModuleIRQs_o_4 0 Bit 30 30
+mapcell CellOutSPI_CPHA_o 0 Bit 31 31
+mapcell CellOutSPI_CPOL_o 0 Bit 32 32
+mapcell CellOutSPI_DataIn_o 0 Byte 16 1
+mapcell CellInSPI_DataOut_i 0 Byte 0 4
+mapcell CellInSPI_FIFOEmpty_i 0 Bit 33 35
+mapcell CellInSPI_FIFOFull_i 0 Bit 34 27
+mapcell CellOutSPI_LSBFE_o 0 Bit 35 33
+mapcell CellOutSPI_ReadNext_o 0 Bit 10 36
+mapcell CellInSPI_Transmission_i 0 Bit 61 70
+mapcell CellOutSPI_Write_o 0 Bit 60 69
+mapcell CellInReconfModuleIn_i_0 0 Bit 70 39
+mapcell CellInReconfModuleIn_i_1 0 Bit 40 40
+mapcell CellInReconfModuleIn_i_2 0 Bit 41 41
+mapcell CellInReconfModuleIn_i_3 0 Bit 42 42
+mapcell CellInReconfModuleIn_i_4 0 Bit 43 43
+mapcell CellInReconfModuleIn_i_5 0 Bit 44 44
+mapcell CellInReconfModuleIn_i_6 0 Bit 45 45
+mapcell CellInReconfModuleIn_i_7 0 Bit 46 46
+mapcell CellOutReconfModuleOut_o_0 0 Bit 47 47
+mapcell CellOutReconfModuleOut_o_1 0 Bit 48 48
+mapcell CellOutReconfModuleOut_o_2 0 Bit 49 49
+mapcell CellOutReconfModuleOut_o_3 0 Bit 50 50
+mapcell CellOutReconfModuleOut_o_4 0 Bit 51 51
+mapcell CellOutReconfModuleOut_o_5 0 Bit 52 52
+mapcell CellOutReconfModuleOut_o_6 0 Bit 53 53
+mapcell CellOutReconfModuleOut_o_7 0 Bit 54 54
+mapcell Counter 0 Bit 74 62 Word 17 1
+mapcell Counter 1 Bit 66 64 Word 20 2
+mapcell Counter32 0 Bit 3 61 Word 21 11
+mapcell Counter32 1 Bit 65 66 Word 9 0
+mapcell AbsDiff 0 Word 5 5
+mapcell WordRegister 0 Bit 55 74 Word 6 6
+mapcell WordRegister 1 Bit 38 56 Word 14 7
+mapcell WordRegister 2 Bit 37 57 Word 1 8
+mapcell ByteRegister 0 Bit 19 73 Byte 5 5
+mapcell ByteRegister 1 Bit 18 63 Byte 6 6
+mapcell AddSubCmp 0 Bit 73 60 Word 4 15
+mapcell AddSubCmp 1 Bit 58 34 Word 11 10
+mapcell ByteMuxQuad 0 Bit 5 58 Byte 14 7
+mapcell ByteMuxDual 0 Bit 0 55 Byte 10 16
+mapcell ByteMuxDual 1 Bit 57 68 Byte 9 9
+mapcell Byte2Word 0 Byte 4 10 Word 10 3
+mapcell Byte2WordSel 0 Byte 3 11 Word 12 9
+mapcell WordMuxDual 0 Bit 36 38 Word 13 16
+mapcell WordMuxDual 1 Bit 39 37 Word 15 14
+mapcell TRFSM0 0 Bit 71 71
+mapcell TRFSM1 0 Bit 4 72
+mapcell CONST_Bit 0 Bit 68 65
+mapcell CONST_Bit 1 Bit 63 59
+mapcell CONST_Byte 0 Byte 12 12
+mapcell CONST_Byte 1 Byte 13 13
+mapcell CONST_Byte 2 Byte 7 14
+mapcell CONST_Byte 3 Byte 15 15
+mapcell CONST_Byte 4 Byte 2 8
+mapcell CONST_Byte 5 Byte 17 17
+mapcell CONST_Word 0 Word 2 12
+mapcell CellParamIn_Word 0 Word 16 13
+mapcell CellParamIn_Word 1 Word 8 17
+mapcell CellParamIn_Word 2 Word 22 18
+mapcell CellParamIn_Word 3 Word 19 19
+mapcell CellParamIn_Word 4 Word 7 20
+mapcell CellParamOut_Word 0 Word 3 21
+mapcell CellParamOut_Word 1 Word 18 22

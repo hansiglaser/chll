@@ -1,0 +1,14 @@
+.fromstates SensorFSM_State_reg[3] SensorFSM_State_reg[2] SensorFSM_State_reg[1] SensorFSM_State_reg[0]
+.tostates State_o_reg[4] State_o_reg[3] State_o_reg[2] State_o_reg[1] State_o_reg[0]
+.begin
+0000 00000
+1000 00001
+0100 00010
+0010 00011
+0110 00100
+0001 00101
+1001 00110
+0101 00111
+0011 01000
+0111 01001
+.end

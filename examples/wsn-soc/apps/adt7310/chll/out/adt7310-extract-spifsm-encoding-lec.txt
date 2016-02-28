@@ -1,0 +1,15 @@
+.fromstates SPIFSM_1/SPI_FSM_State_reg[3] SPIFSM_1/SPI_FSM_State_reg[2] SPIFSM_1/SPI_FSM_State_reg[1] SPIFSM_1/SPI_FSM_State_reg[0]
+.tostates State_o_reg[4] State_o_reg[3] State_o_reg[2] State_o_reg[1] State_o_reg[0]
+.begin
+0000 00000
+1000 00001
+0100 00010
+0010 00011
+1010 00100
+0110 00101
+0001 00110
+1001 00111
+0101 01000
+0011 01001
+0111 01010
+.end

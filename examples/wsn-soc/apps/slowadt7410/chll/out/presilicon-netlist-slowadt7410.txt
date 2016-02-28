@@ -1,0 +1,86 @@
+netlist SlowADT7410
+node InstInReconfModuleIn_i_0 CellInReconfModuleIn_i_0 PORT Enable_i
+node InstOutReconfModuleIRQs_o_0 CellOutReconfModuleIRQs_o_0 PORT CpuIntr_o
+node InstOutI2C_ReceiveSend_n_o CellOutI2C_ReceiveSend_n_o PORT I2C_ReceiveSend_n_o
+node InstOutI2C_ReadCount_o CellOutI2C_ReadCount_o PORT I2C_ReadCount_o
+node InstOutI2C_StartProcess_o CellOutI2C_StartProcess_o PORT I2C_StartProcess_o
+node InstInI2C_Busy_i CellInI2C_Busy_i PORT I2C_Busy_i
+node InstOutI2C_FIFOReadNext_o CellOutI2C_FIFOReadNext_o PORT I2C_FIFOReadNext_o
+node InstOutI2C_FIFOWrite_o CellOutI2C_FIFOWrite_o PORT I2C_FIFOWrite_o
+node InstOutI2C_DataIn_o CellOutI2C_DataIn_o PORT I2C_Data_o
+node InstInI2C_DataOut_i CellInI2C_DataOut_i PORT I2C_Data_i
+node InstInI2C_Error_i CellInI2C_Error_i PORT I2C_Error_i
+node InstParamIn_PeriodCounterPresetH_i CellParamIn_Word PORT PeriodCounterPresetH_i
+node InstParamIn_PeriodCounterPresetL_i CellParamIn_Word PORT PeriodCounterPresetL_i
+node InstParamOut_SensorValue_o CellParamOut_Word PORT SensorValue_o
+node InstParamIn_Threshold_i CellParamIn_Word PORT Threshold_i
+node InstParamIn_WaitCounterPresetH_i CellParamIn_Word PORT WaitCounterPresetH_i
+node InstParamIn_WaitCounterPresetL_i CellParamIn_Word PORT WaitCounterPresetL_i
+node $extract$\Byte2Word$2915 Byte2Word H_i I2CFSM_1.Byte1_o L_i I2CFSM_1.Byte0_o Y_o SensorFSM_1.SensorValue
+node $techmap\I2CFSM_1.$extract$\ByteMuxDual$2910 ByteMuxDual A_i CONST_Byte_00000000 B_i CONST_Byte_00000010 S_i I2C_ReceiveSend_n_o Y_o I2C_ReadCount_o
+node $techmap\I2CFSM_1.$extract$\ByteMuxDual$2911 ByteMuxDual A_i $techmap\I2CFSM_1.$techmap$procmux$1425.$procmux$2880_Y B_i CONST_Byte_00000011 S_i $techmap\I2CFSM_1.$procmux$1169_CMP Y_o I2C_Data_o
+node $techmap\I2CFSM_1.$extract$\ByteMuxQuad$2909 ByteMuxQuad A_i CONST_Byte_00000000 B_i CONST_Byte_10010001 C_i CONST_Byte_10010000 D_i CONST_Byte_00100000 SAB_i $techmap\I2CFSM_1.$procmux$1156_CMP SC_i $techmap\I2CFSM_1.$auto$opt_reduce.cc:126:opt_mux$2832 SD_i $techmap\I2CFSM_1.$procmux$1168_CMP Y_o $techmap\I2CFSM_1.$techmap$procmux$1425.$procmux$2880_Y
+node $techmap\I2CFSM_1.$extract$\ByteRegister$2906 ByteRegister D_i I2C_Data_i Enable_i I2CFSM_1.I2C_FSM_Wr0 Q_o I2CFSM_1.Byte0_o
+node $techmap\I2CFSM_1.$extract$\ByteRegister$2907 ByteRegister D_i I2C_Data_i Enable_i I2CFSM_1.I2C_FSM_Wr1 Q_o I2CFSM_1.Byte1_o
+node $techmap\I2CFSM_1.$extract$\Counter32_RV1_Timer$2903.ThisCounter Counter32 Direction_i CONST_Bit_1 Enable_i I2CFSM_1.I2C_FSM_TimerEnable PresetValH_i WaitCounterPresetH_i PresetValL_i WaitCounterPresetL_i Preset_i I2CFSM_1.I2C_FSM_TimerPreset ResetSig_i CONST_Bit_0 Zero_o I2CFSM_1.I2C_FSM_TimerOvfl
+node $techmap\SensorFSM_1.$extract$\AbsDiff$2904 AbsDiff A_i SensorFSM_1.SensorValue B_i SensorValue_o D_o SensorFSM_1.AbsDiffResult
+node $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2908.ThisAddSubCmp AddSubCmp A_i SensorFSM_1.AbsDiffResult AddOrSub_i CONST_Bit_1 B_i Threshold_i Carry_i CONST_Bit_0 Carry_o $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2908.Carry_s Zero_o $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2908.Zero_s
+node $techmap\SensorFSM_1.$extract$\Counter32_RV1_Timer$2902.ThisCounter Counter32 Direction_i CONST_Bit_1 Enable_i SensorFSM_1.SensorFSM_TimerEnable PresetValH_i PeriodCounterPresetH_i PresetValL_i PeriodCounterPresetL_i Preset_i SensorFSM_1.SensorFSM_TimerPreset ResetSig_i CONST_Bit_0 Zero_o SensorFSM_1.SensorFSM_TimerOvfl
+node $techmap\SensorFSM_1.$extract$\WordRegister$2905 WordRegister D_i SensorFSM_1.SensorValue Enable_i SensorFSM_1.SensorFSM_StoreNewValue Q_o SensorValue_o
+node TRFSM0_1 TRFSM0 In0_i Enable_i In1_i I2CFSM_1.Done_o In2_i I2CFSM_1.Error_o In3_i SensorFSM_1.SensorFSM_TimerOvfl In4_i $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2908.Carry_s In5_i $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2908.Zero_s Out0_o I2CFSM_1.Start_i Out1_o SensorFSM_1.SensorFSM_StoreNewValue Out2_o CpuIntr_o Out3_o SensorFSM_1.SensorFSM_TimerEnable Out4_o SensorFSM_1.SensorFSM_TimerPreset
+node TRFSM1_1 TRFSM1 In0_i I2C_Busy_i In1_i I2C_Error_i In2_i I2CFSM_1.I2C_FSM_TimerOvfl In3_i I2CFSM_1.Start_i In4_i CONST_Bit_0 In5_i CONST_Bit_0 In6_i CONST_Bit_0 In7_i CONST_Bit_0 In8_i CONST_Bit_0 In9_i CONST_Bit_0 Out0_o $techmap\I2CFSM_1.$procmux$1156_CMP Out10_o I2C_FIFOReadNext_o Out11_o I2CFSM_1.I2C_FSM_TimerEnable Out12_o I2CFSM_1.I2C_FSM_TimerPreset Out13_o I2C_FIFOWrite_o Out1_o $techmap\I2CFSM_1.$procmux$1168_CMP Out2_o $techmap\I2CFSM_1.$procmux$1169_CMP Out3_o I2CFSM_1.Done_o Out4_o I2CFSM_1.I2C_FSM_Wr0 Out5_o I2C_ReceiveSend_n_o Out6_o I2C_StartProcess_o Out7_o $techmap\I2CFSM_1.$auto$opt_reduce.cc:126:opt_mux$2832 Out8_o I2CFSM_1.Error_o Out9_o I2CFSM_1.I2C_FSM_Wr1
+node InstCONST_Byte_00000000 CONST_Byte CfgValue_i '00000000 Value_o CONST_Byte_00000000
+node InstCONST_Byte_00000010 CONST_Byte CfgValue_i '00000010 Value_o CONST_Byte_00000010
+node InstCONST_Byte_00000011 CONST_Byte CfgValue_i '00000011 Value_o CONST_Byte_00000011
+node InstCONST_Byte_10010001 CONST_Byte CfgValue_i '10010001 Value_o CONST_Byte_10010001
+node InstCONST_Byte_10010000 CONST_Byte CfgValue_i '10010000 Value_o CONST_Byte_10010000
+node InstCONST_Byte_00100000 CONST_Byte CfgValue_i '00100000 Value_o CONST_Byte_00100000
+node InstCONST_Bit_1 CONST_Bit CfgValue_i '1 Value_o CONST_Bit_1
+node InstCONST_Bit_0 CONST_Bit CfgValue_i '0 Value_o CONST_Bit_0
+node unused-WordRegister-1 WordRegister
+node unused-WordRegister-2 WordRegister
+node unused-AddSubCmp-1 AddSubCmp
+node unused-CellParamOut_Word-1 CellParamOut_Word
+netlist SlowADT7410
+mapnode InstInReconfModuleIn_i_0 0
+mapnode InstOutReconfModuleIRQs_o_0 0
+mapnode InstOutI2C_ReceiveSend_n_o 0
+mapnode InstOutI2C_ReadCount_o 0
+mapnode InstOutI2C_StartProcess_o 0
+mapnode InstInI2C_Busy_i 0
+mapnode InstOutI2C_FIFOReadNext_o 0
+mapnode InstOutI2C_FIFOWrite_o 0
+mapnode InstOutI2C_DataIn_o 0
+mapnode InstInI2C_DataOut_i 0
+mapnode InstInI2C_Error_i 0
+mapnode InstParamIn_PeriodCounterPresetH_i 4
+mapnode InstParamIn_PeriodCounterPresetL_i 1
+mapnode InstParamOut_SensorValue_o 0
+mapnode InstParamIn_Threshold_i 2
+mapnode InstParamIn_WaitCounterPresetH_i 3
+mapnode InstParamIn_WaitCounterPresetL_i 0
+mapnode $extract$\Byte2Word$2915 0
+mapnode $techmap\I2CFSM_1.$extract$\ByteMuxDual$2910 0
+mapnode $techmap\I2CFSM_1.$extract$\ByteMuxDual$2911 1
+mapnode $techmap\I2CFSM_1.$extract$\ByteMuxQuad$2909 0
+mapnode $techmap\I2CFSM_1.$extract$\ByteRegister$2906 0
+mapnode $techmap\I2CFSM_1.$extract$\ByteRegister$2907 1
+mapnode $techmap\I2CFSM_1.$extract$\Counter32_RV1_Timer$2903.ThisCounter 0
+mapnode $techmap\SensorFSM_1.$extract$\AbsDiff$2904 0
+mapnode $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2908.ThisAddSubCmp 0
+mapnode $techmap\SensorFSM_1.$extract$\Counter32_RV1_Timer$2902.ThisCounter 1
+mapnode $techmap\SensorFSM_1.$extract$\WordRegister$2905 0
+mapnode TRFSM0_1 0
+mapnode TRFSM1_1 0
+mapnode InstCONST_Byte_00000000 0
+mapnode InstCONST_Byte_00000010 1
+mapnode InstCONST_Byte_00000011 2
+mapnode InstCONST_Byte_10010001 3
+mapnode InstCONST_Byte_10010000 4
+mapnode InstCONST_Byte_00100000 5
+mapnode InstCONST_Bit_1 1
+mapnode InstCONST_Bit_0 0
+mapnode unused-WordRegister-1 1
+mapnode unused-WordRegister-2 2
+mapnode unused-AddSubCmp-1 1
+mapnode unused-CellParamOut_Word-1 1

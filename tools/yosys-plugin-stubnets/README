@@ -1,0 +1,5 @@
+This is the "Stubnets" plugin for Yosys. It was developed by Clifford Wolf
+and improved by Johann Glaser. It is free and unencumbered software
+released into the public domain. Johann Glaser also added
+stubnets-verbose.cc which prints large amounts of debug info. See also the
+subdirectory /manual/CHAPTER_Prog/ of the Yosys source tree.

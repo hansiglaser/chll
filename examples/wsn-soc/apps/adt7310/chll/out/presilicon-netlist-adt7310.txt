@@ -1,0 +1,90 @@
+netlist ADT7310
+node InstInReconfModuleIn_i_0 CellInReconfModuleIn_i_0 PORT Enable_i
+node InstOutReconfModuleIRQs_o_0 CellOutReconfModuleIRQs_o_0 PORT CpuIntr_o
+node InstOutOutputs_o_0 CellOutOutputs_o_0 PORT ADT7310CS_n_o
+node InstInSPI_DataOut_i CellInSPI_DataOut_i PORT SPI_Data_i
+node InstOutSPI_Write_o CellOutSPI_Write_o PORT SPI_Write_o
+node InstOutSPI_ReadNext_o CellOutSPI_ReadNext_o PORT SPI_ReadNext_o
+node InstOutSPI_DataIn_o CellOutSPI_DataIn_o PORT SPI_Data_o
+node InstInSPI_FIFOFull_i CellInSPI_FIFOFull_i
+node InstInSPI_FIFOEmpty_i CellInSPI_FIFOEmpty_i
+node InstInSPI_Transmission_i CellInSPI_Transmission_i PORT SPI_Transmission_i
+node InstParamIn_PeriodCounterPreset_i CellParamIn_Word PORT PeriodCounterPreset_i
+node InstParamIn_SPICounterPresetH_i CellParamIn_Word PORT SPICounterPresetH_i
+node InstParamIn_SPICounterPresetL_i CellParamIn_Word PORT SPICounterPresetL_i
+node InstParamOut_SensorValue_o CellParamOut_Word PORT SensorValue_o
+node InstParamIn_Threshold_i CellParamIn_Word PORT Threshold_i
+node InstOutSPI_CPOL_o CellOutSPI_CPOL_o PORT CONST_Bit_1
+node InstOutSPI_CPHA_o CellOutSPI_CPHA_o PORT CONST_Bit_1
+node InstOutSPI_LSBFE_o CellOutSPI_LSBFE_o PORT CONST_Bit_0
+node $extract$\Byte2Word$2543 Byte2Word H_i SPIFSM_Byte1_s L_i SPIFSM_Byte0_s Y_o SensorFSM_1.SensorValue
+node $techmap\SPIFSM_1.$extract$\ByteMuxQuad$2539 ByteMuxQuad A_i CONST_Byte_00001000 B_i CONST_Byte_11111111 C_i CONST_Byte_01010000 D_i CONST_Byte_00100000 SAB_i $techmap\SPIFSM_1.$auto$opt_reduce.cc:126:opt_mux$2459 SC_i $techmap\SPIFSM_1.$procmux$297_CMP SD_i $techmap\SPIFSM_1.$procmux$302_CMP Y_o SPI_Data_o
+node $techmap\SPIFSM_1.$extract$\ByteRegister$2536 ByteRegister D_i SPI_Data_i Enable_i SPIFSM_1.SPI_FSM_Wr0 Q_o SPIFSM_Byte0_s
+node $techmap\SPIFSM_1.$extract$\ByteRegister$2537 ByteRegister D_i SPI_Data_i Enable_i SPIFSM_1.SPI_FSM_Wr1 Q_o SPIFSM_Byte1_s
+node $techmap\SPIFSM_1.$extract$\Counter32_RV1_Timer$2533.ThisCounter Counter32 Direction_i CONST_Bit_1 Enable_i SPIFSM_1.SPI_FSM_TimerEnable PresetValH_i SPICounterPresetH_i PresetValL_i SPICounterPresetL_i Preset_i SPIFSM_1.SPI_FSM_TimerPreset ResetSig_i CONST_Bit_0 Zero_o SPIFSM_1.SPI_FSM_TimerOvfl
+node $techmap\SensorFSM_1.$extract$\AbsDiff$2534 AbsDiff A_i SensorFSM_1.SensorValue B_i SensorValue_o D_o SensorFSM_1.AbsDiffResult
+node $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2538.ThisAddSubCmp AddSubCmp A_i SensorFSM_1.AbsDiffResult AddOrSub_i CONST_Bit_1 B_i Threshold_i Carry_i CONST_Bit_0 Carry_o $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2538.Carry_s Zero_o $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2538.Zero_s
+node $techmap\SensorFSM_1.$extract$\Counter_RV1_Timer$2532.ThisCounter Counter Direction_i CONST_Bit_1 Enable_i SensorFSM_1.SensorFSM_TimerEnable PresetVal_i PeriodCounterPreset_i Preset_i SensorFSM_1.SensorFSM_TimerPreset ResetSig_i CONST_Bit_0 Zero_o SensorFSM_1.SensorFSM_TimerOvfl
+node $techmap\SensorFSM_1.$extract$\WordRegister$2535 WordRegister D_i SensorFSM_1.SensorValue Enable_i SensorFSM_1.SensorFSM_StoreNewValue Q_o SensorValue_o
+node TRFSM0_1 TRFSM0 In0_i Enable_i In1_i SPIFSM_Done_s In2_i SensorFSM_1.SensorFSM_TimerOvfl In3_i $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2538.Carry_s In4_i $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2538.Zero_s In5_i CONST_Bit_0 Out0_o SPIFSM_Start_s Out1_o SensorFSM_1.SensorFSM_StoreNewValue Out2_o SensorFSM_1.SensorFSM_TimerEnable Out3_o SensorFSM_1.SensorFSM_TimerPreset Out4_o CpuIntr_o
+node TRFSM1_1 TRFSM1 In0_i SPIFSM_1.SPI_FSM_TimerOvfl In1_i SPI_Transmission_i In2_i SPIFSM_Start_s In3_i CONST_Bit_0 In4_i CONST_Bit_0 In5_i CONST_Bit_0 In6_i CONST_Bit_0 In7_i CONST_Bit_0 In8_i CONST_Bit_0 In9_i CONST_Bit_0 Out0_o $techmap\SPIFSM_1.$procmux$297_CMP Out10_o SPI_ReadNext_o Out1_o $techmap\SPIFSM_1.$procmux$302_CMP Out2_o SPIFSM_1.SPI_FSM_Wr0 Out3_o SPIFSM_1.SPI_FSM_Wr1 Out4_o $techmap\SPIFSM_1.$auto$opt_reduce.cc:126:opt_mux$2459 Out5_o SPIFSM_1.SPI_FSM_TimerEnable Out6_o SPIFSM_1.SPI_FSM_TimerPreset Out7_o ADT7310CS_n_o Out8_o SPIFSM_Done_s Out9_o SPI_Write_o
+node InstCONST_Bit_1 CONST_Bit CfgValue_i '1 Value_o CONST_Bit_1
+node InstCONST_Bit_0 CONST_Bit CfgValue_i '0 Value_o CONST_Bit_0
+node InstCONST_Byte_00001000 CONST_Byte CfgValue_i '00001000 Value_o CONST_Byte_00001000
+node InstCONST_Byte_11111111 CONST_Byte CfgValue_i '11111111 Value_o CONST_Byte_11111111
+node InstCONST_Byte_01010000 CONST_Byte CfgValue_i '01010000 Value_o CONST_Byte_01010000
+node InstCONST_Byte_00100000 CONST_Byte CfgValue_i '00100000 Value_o CONST_Byte_00100000
+node unused-Counter-1 Counter
+node unused-Counter32-1 Counter32
+node unused-WordRegister-1 WordRegister
+node unused-WordRegister-2 WordRegister
+node unused-AddSubCmp-1 AddSubCmp
+node unused-CONST_Byte-4 CONST_Byte CfgValue_i '00000000
+node unused-CONST_Byte-5 CONST_Byte CfgValue_i '00000000
+node unused-CellParamIn_Word-4 CellParamIn_Word
+node unused-CellParamOut_Word-1 CellParamOut_Word
+netlist ADT7310
+mapnode InstInReconfModuleIn_i_0 0
+mapnode InstOutReconfModuleIRQs_o_0 0
+mapnode InstOutOutputs_o_0 0
+mapnode InstInSPI_DataOut_i 0
+mapnode InstOutSPI_Write_o 0
+mapnode InstOutSPI_ReadNext_o 0
+mapnode InstOutSPI_DataIn_o 0
+mapnode InstInSPI_FIFOFull_i 0
+mapnode InstInSPI_FIFOEmpty_i 0
+mapnode InstInSPI_Transmission_i 0
+mapnode InstParamIn_PeriodCounterPreset_i 0
+mapnode InstParamIn_SPICounterPresetH_i 3
+mapnode InstParamIn_SPICounterPresetL_i 2
+mapnode InstParamOut_SensorValue_o 0
+mapnode InstParamIn_Threshold_i 1
+mapnode InstOutSPI_CPOL_o 0
+mapnode InstOutSPI_CPHA_o 0
+mapnode InstOutSPI_LSBFE_o 0
+mapnode $extract$\Byte2Word$2543 0
+mapnode $techmap\SPIFSM_1.$extract$\ByteMuxQuad$2539 0
+mapnode $techmap\SPIFSM_1.$extract$\ByteRegister$2536 0
+mapnode $techmap\SPIFSM_1.$extract$\ByteRegister$2537 1
+mapnode $techmap\SPIFSM_1.$extract$\Counter32_RV1_Timer$2533.ThisCounter 0
+mapnode $techmap\SensorFSM_1.$extract$\AbsDiff$2534 0
+mapnode $techmap\SensorFSM_1.$extract$\AddSubCmp_Greater_Direct$2538.ThisAddSubCmp 0
+mapnode $techmap\SensorFSM_1.$extract$\Counter_RV1_Timer$2532.ThisCounter 0
+mapnode $techmap\SensorFSM_1.$extract$\WordRegister$2535 0
+mapnode TRFSM0_1 0
+mapnode TRFSM1_1 0
+mapnode InstCONST_Bit_1 1
+mapnode InstCONST_Bit_0 0
+mapnode InstCONST_Byte_00001000 0
+mapnode InstCONST_Byte_11111111 3
+mapnode InstCONST_Byte_01010000 4
+mapnode InstCONST_Byte_00100000 5
+mapnode unused-Counter-1 1
+mapnode unused-Counter32-1 1
+mapnode unused-WordRegister-1 1
+mapnode unused-WordRegister-2 2
+mapnode unused-AddSubCmp-1 1
+mapnode unused-CONST_Byte-4 2
+mapnode unused-CONST_Byte-5 1
+mapnode unused-CellParamIn_Word-4 4
+mapnode unused-CellParamOut_Word-1 1

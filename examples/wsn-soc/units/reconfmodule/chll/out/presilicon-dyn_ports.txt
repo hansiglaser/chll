@@ -1,0 +1,150 @@
+### Dynamic Ports
+celltype !CellInAdcConvComplete_i Bit *PORT
+input AdcConvComplete_i 1 CellInAdcConvComplete_i PORT
+headroom cellup CellInAdcConvComplete_i min 1
+celltype !CellOutAdcDoConvert_o Bit PORT
+output AdcDoConvert_o 1 CellOutAdcDoConvert_o PORT
+celltype !CellInAdcValue_i Word *PORT
+input AdcValue_i 16 CellInAdcValue_i PORT
+headroom cellup CellInAdcValue_i min 1
+celltype !CellInI2C_Busy_i Bit *PORT
+input I2C_Busy_i 1 CellInI2C_Busy_i PORT
+headroom cellup CellInI2C_Busy_i min 1
+celltype !CellOutI2C_DataIn_o Byte PORT
+output I2C_DataIn_o 8 CellOutI2C_DataIn_o PORT
+celltype !CellInI2C_DataOut_i Byte *PORT
+input I2C_DataOut_i 8 CellInI2C_DataOut_i PORT
+headroom cellup CellInI2C_DataOut_i min 1
+celltype !CellInI2C_Error_i Bit *PORT
+input I2C_Error_i 1 CellInI2C_Error_i PORT
+headroom cellup CellInI2C_Error_i min 1
+celltype !CellInI2C_FIFOEmpty_i Bit *PORT
+input I2C_FIFOEmpty_i 1 CellInI2C_FIFOEmpty_i PORT
+headroom cellup CellInI2C_FIFOEmpty_i min 1
+celltype !CellInI2C_FIFOFull_i Bit *PORT
+input I2C_FIFOFull_i 1 CellInI2C_FIFOFull_i PORT
+headroom cellup CellInI2C_FIFOFull_i min 1
+celltype !CellOutI2C_FIFOReadNext_o Bit PORT
+output I2C_FIFOReadNext_o 1 CellOutI2C_FIFOReadNext_o PORT
+celltype !CellOutI2C_FIFOWrite_o Bit PORT
+output I2C_FIFOWrite_o 1 CellOutI2C_FIFOWrite_o PORT
+celltype !CellOutI2C_ReadCount_o Byte PORT
+output I2C_ReadCount_o 8 CellOutI2C_ReadCount_o PORT
+celltype !CellOutI2C_ReceiveSend_n_o Bit PORT
+output I2C_ReceiveSend_n_o 1 CellOutI2C_ReceiveSend_n_o PORT
+celltype !CellOutI2C_StartProcess_o Bit PORT
+output I2C_StartProcess_o 1 CellOutI2C_StartProcess_o PORT
+celltype !CellInInputs_i_0 Bit *PORT
+input Inputs_i_0 1 CellInInputs_i_0 PORT
+headroom cellup CellInInputs_i_0 min 1
+celltype !CellInInputs_i_1 Bit *PORT
+input Inputs_i_1 1 CellInInputs_i_1 PORT
+headroom cellup CellInInputs_i_1 min 1
+celltype !CellInInputs_i_2 Bit *PORT
+input Inputs_i_2 1 CellInInputs_i_2 PORT
+headroom cellup CellInInputs_i_2 min 1
+celltype !CellInInputs_i_3 Bit *PORT
+input Inputs_i_3 1 CellInInputs_i_3 PORT
+headroom cellup CellInInputs_i_3 min 1
+celltype !CellInInputs_i_4 Bit *PORT
+input Inputs_i_4 1 CellInInputs_i_4 PORT
+headroom cellup CellInInputs_i_4 min 1
+celltype !CellInInputs_i_5 Bit *PORT
+input Inputs_i_5 1 CellInInputs_i_5 PORT
+headroom cellup CellInInputs_i_5 min 1
+celltype !CellInInputs_i_6 Bit *PORT
+input Inputs_i_6 1 CellInInputs_i_6 PORT
+headroom cellup CellInInputs_i_6 min 1
+celltype !CellInInputs_i_7 Bit *PORT
+input Inputs_i_7 1 CellInInputs_i_7 PORT
+headroom cellup CellInInputs_i_7 min 1
+celltype !CellOutOutputs_o_0 Bit PORT
+output Outputs_o_0 1 CellOutOutputs_o_0 PORT
+celltype !CellOutOutputs_o_1 Bit PORT
+output Outputs_o_1 1 CellOutOutputs_o_1 PORT
+celltype !CellOutOutputs_o_2 Bit PORT
+output Outputs_o_2 1 CellOutOutputs_o_2 PORT
+celltype !CellOutOutputs_o_3 Bit PORT
+output Outputs_o_3 1 CellOutOutputs_o_3 PORT
+celltype !CellOutOutputs_o_4 Bit PORT
+output Outputs_o_4 1 CellOutOutputs_o_4 PORT
+celltype !CellOutOutputs_o_5 Bit PORT
+output Outputs_o_5 1 CellOutOutputs_o_5 PORT
+celltype !CellOutOutputs_o_6 Bit PORT
+output Outputs_o_6 1 CellOutOutputs_o_6 PORT
+celltype !CellOutOutputs_o_7 Bit PORT
+output Outputs_o_7 1 CellOutOutputs_o_7 PORT
+celltype !CellOutReconfModuleIRQs_o_0 Bit PORT
+output ReconfModuleIRQs_o_0 1 CellOutReconfModuleIRQs_o_0 PORT
+celltype !CellOutReconfModuleIRQs_o_1 Bit PORT
+output ReconfModuleIRQs_o_1 1 CellOutReconfModuleIRQs_o_1 PORT
+celltype !CellOutReconfModuleIRQs_o_2 Bit PORT
+output ReconfModuleIRQs_o_2 1 CellOutReconfModuleIRQs_o_2 PORT
+celltype !CellOutReconfModuleIRQs_o_3 Bit PORT
+output ReconfModuleIRQs_o_3 1 CellOutReconfModuleIRQs_o_3 PORT
+celltype !CellOutReconfModuleIRQs_o_4 Bit PORT
+output ReconfModuleIRQs_o_4 1 CellOutReconfModuleIRQs_o_4 PORT
+celltype !CellOutSPI_CPHA_o Bit PORT
+output SPI_CPHA_o 1 CellOutSPI_CPHA_o PORT
+celltype !CellOutSPI_CPOL_o Bit PORT
+output SPI_CPOL_o 1 CellOutSPI_CPOL_o PORT
+celltype !CellOutSPI_DataIn_o Byte PORT
+output SPI_DataIn_o 8 CellOutSPI_DataIn_o PORT
+celltype !CellInSPI_DataOut_i Byte *PORT
+input SPI_DataOut_i 8 CellInSPI_DataOut_i PORT
+headroom cellup CellInSPI_DataOut_i min 1
+celltype !CellInSPI_FIFOEmpty_i Bit *PORT
+input SPI_FIFOEmpty_i 1 CellInSPI_FIFOEmpty_i PORT
+headroom cellup CellInSPI_FIFOEmpty_i min 1
+celltype !CellInSPI_FIFOFull_i Bit *PORT
+input SPI_FIFOFull_i 1 CellInSPI_FIFOFull_i PORT
+headroom cellup CellInSPI_FIFOFull_i min 1
+celltype !CellOutSPI_LSBFE_o Bit PORT
+output SPI_LSBFE_o 1 CellOutSPI_LSBFE_o PORT
+celltype !CellOutSPI_ReadNext_o Bit PORT
+output SPI_ReadNext_o 1 CellOutSPI_ReadNext_o PORT
+celltype !CellInSPI_Transmission_i Bit *PORT
+input SPI_Transmission_i 1 CellInSPI_Transmission_i PORT
+headroom cellup CellInSPI_Transmission_i min 1
+celltype !CellOutSPI_Write_o Bit PORT
+output SPI_Write_o 1 CellOutSPI_Write_o PORT
+celltype !CellInReconfModuleIn_i_0 Bit *PORT
+input ReconfModuleIn_i_0 1 CellInReconfModuleIn_i_0 PORT
+headroom cellup CellInReconfModuleIn_i_0 min 1
+celltype !CellInReconfModuleIn_i_1 Bit *PORT
+input ReconfModuleIn_i_1 1 CellInReconfModuleIn_i_1 PORT
+headroom cellup CellInReconfModuleIn_i_1 min 1
+celltype !CellInReconfModuleIn_i_2 Bit *PORT
+input ReconfModuleIn_i_2 1 CellInReconfModuleIn_i_2 PORT
+headroom cellup CellInReconfModuleIn_i_2 min 1
+celltype !CellInReconfModuleIn_i_3 Bit *PORT
+input ReconfModuleIn_i_3 1 CellInReconfModuleIn_i_3 PORT
+headroom cellup CellInReconfModuleIn_i_3 min 1
+celltype !CellInReconfModuleIn_i_4 Bit *PORT
+input ReconfModuleIn_i_4 1 CellInReconfModuleIn_i_4 PORT
+headroom cellup CellInReconfModuleIn_i_4 min 1
+celltype !CellInReconfModuleIn_i_5 Bit *PORT
+input ReconfModuleIn_i_5 1 CellInReconfModuleIn_i_5 PORT
+headroom cellup CellInReconfModuleIn_i_5 min 1
+celltype !CellInReconfModuleIn_i_6 Bit *PORT
+input ReconfModuleIn_i_6 1 CellInReconfModuleIn_i_6 PORT
+headroom cellup CellInReconfModuleIn_i_6 min 1
+celltype !CellInReconfModuleIn_i_7 Bit *PORT
+input ReconfModuleIn_i_7 1 CellInReconfModuleIn_i_7 PORT
+headroom cellup CellInReconfModuleIn_i_7 min 1
+celltype !CellOutReconfModuleOut_o_0 Bit PORT
+output ReconfModuleOut_o_0 1 CellOutReconfModuleOut_o_0 PORT
+celltype !CellOutReconfModuleOut_o_1 Bit PORT
+output ReconfModuleOut_o_1 1 CellOutReconfModuleOut_o_1 PORT
+celltype !CellOutReconfModuleOut_o_2 Bit PORT
+output ReconfModuleOut_o_2 1 CellOutReconfModuleOut_o_2 PORT
+celltype !CellOutReconfModuleOut_o_3 Bit PORT
+output ReconfModuleOut_o_3 1 CellOutReconfModuleOut_o_3 PORT
+celltype !CellOutReconfModuleOut_o_4 Bit PORT
+output ReconfModuleOut_o_4 1 CellOutReconfModuleOut_o_4 PORT
+celltype !CellOutReconfModuleOut_o_5 Bit PORT
+output ReconfModuleOut_o_5 1 CellOutReconfModuleOut_o_5 PORT
+celltype !CellOutReconfModuleOut_o_6 Bit PORT
+output ReconfModuleOut_o_6 1 CellOutReconfModuleOut_o_6 PORT
+celltype !CellOutReconfModuleOut_o_7 Bit PORT
+output ReconfModuleOut_o_7 1 CellOutReconfModuleOut_o_7 PORT

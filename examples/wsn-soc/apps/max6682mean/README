@@ -1,0 +1,8 @@
+MAX6682 -- Sensor Interface to Maxim MAX6682 SPI Temperature Sensor
+-------------------------------------------------------------------
+
+ - 1st FSM to query one value from the sensor
+ - 2nd FSM to request a new measurement and compare with old value
+ - both FSMs are implemented within the MAX6682 top module
+ - the sensor uses a much simpler protocol than ADT7310
+ - this application does identical post-processing as ADT7310

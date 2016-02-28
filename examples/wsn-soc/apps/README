@@ -1,0 +1,18 @@
+Directory Structure
+-------------------
+verilog                         user code for application
+vhdl                            usually unused, old code in VHDL which was translated to Verilog
+tb                              testbench
+chll                            CHLL scripts, logs, reports, output
+sim-rtl                         simulate original user code
+sim-yosys                       simulate Yosys synthesis results
+sim-yosys-fsm                   using $fsm cells
+sim-yosys-trfsm                 $fsm cells replaced by custom TR-FSMs
+sim-yosys-extract               using only cell lib and $fsm cells
+sim-yosys-extract-trfsm         $fsm cells replaced by custom TR-FSMs
+sim-yosys-extract-intersynth    $fsm cells replaced by common TR-FSMS
+sim-intersynth                  InterSynth result wrapped to look like this app
+ec-yosys-trfsm                  $fsm cells replaced by custom TR-FSMs
+ec-yosys-extract-trfsm          $fsm cells replaced by custom TR-FSMs
+ec-yosys-extract-intersynth     $fsm cells replaced by common TR-FSMS
+ec-intersynth                   InterSynth result wrapped to look like this app

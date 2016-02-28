@@ -1,0 +1,2294 @@
+#!/bin/bash
+#
+# FlowCmd: Central design flow command interface
+#
+
+if [ $# -eq 0 ] ; then
+  echo "Usage: $0 [-b chipbase] [--override-post-si hash] command [options ...]"
+  echo
+  echo "Commands:"
+  echo "  new-chip [-o directory]"
+  echo "  new-unit unit_name"
+  echo "  import-unit unit_name source_path"
+  echo "  new-reconf-module"
+  echo "  characterize-parent"
+  echo "  list-reconf-signals"
+  echo "  check-reconf-module"
+  echo "  new-app app_name"
+  echo "  app-templates"
+  echo "  check-app [-interactive|-post-si]"
+  echo "  extract-fsm [-interactive]"
+  echo "  insert-trfsm -fsm|-extract|-post-si"
+  echo "  new-cell cell_name"
+  echo "  cell-templates"
+  echo "  check-cell [-interactive]"
+  echo "  check-celllib"
+  echo "  extract [-interactive]"
+  echo "  check-extract"
+  echo "  check-exapps"
+  echo "  insert-trfsms"
+  echo "  intersynth [-post-si]"
+  echo "  check-intersynth [-post-si]"
+  echo "  generate-reconf-module"
+  echo "  commit-pre-si"
+  echo "  generated-muxed-module"
+  exit
+fi
+
+BASEDIR="$(dirname $0)"
+BASEDIR="$(readlink -m "$BASEDIR")"  # resolve relative path
+TEMPLATEDIR="${BASEDIR}/templates"
+FLOWPROC="$BASEDIR/../flowproc/flowproc"
+TRFSMGEN="$BASEDIR/../trfsmgen/trfsmgen"
+INTERSYNTH="$BASEDIR/../intersynth/intersynth"
+YOSYS_PATH="$BASEDIR/../yosys"
+YOSYS="$YOSYS_PATH/yosys"
+
+ChipBase="."
+
+function FindChipBase {
+  if [ "$ChipBase" != "." ] ; then
+    # $ChipBase was already set, e.g. by "-b"
+    if [ ! -d "$ChipBase" ] ; then
+      echo "Error: Chip base directory \"$ChipBase\" doesn't exist."
+      exit 1
+    fi
+    if [ ! -r "$ChipBase/.chll" ] ; then
+      echo "Error: Chip base directory \"$ChipBase\" is not a chip base directory."
+      exit 1
+    fi
+    ChipBase="$(readlink -m "$ChipBase")"   # resolve relative path
+    return
+  fi
+  # use PWD
+  ChipBase="$(pwd)"
+  # iterate upwards
+  while [ -n "$ChipBase" -a ! -r "$ChipBase/.chll" ] ; do
+    #echo "ChipBase = '$ChipBase'"
+    ChipBase="${ChipBase%/*}"
+  done
+  # did we find a chip base directory?
+  if [ ! -r "$ChipBase/.chll" ] ; then
+    echo "Error: You are not below any chip base directory."
+    exit 1
+  fi
+}
+
+PostSiOverride=""  # set to hash of involved files
+PostSiHash=""
+
+# we are a bit nasty here and require the user to supply a hash value, which
+# is likely to change everytime he changed something
+function CheckPostSiOverride {
+  FindChipBase
+  # if the Post-Si. marker file doesn't exist, we are not in the Post-si. phase
+  if [ ! -e "$ChipBase/.chll-postsi" ] ; then
+    return
+  fi
+  # calculate hash (use .../chll/out/*.* to exclude subdirectories like "presilicon-trees")
+  PostSiHash=$(md5sum $ChipBase/*/*/chll/out/*.* $ChipBase/.chll-postsi | md5sum | cut -d' ' -f1)
+  # did the user supply the correct hash?
+  if [ "$PostSiOverride" = "$PostSiHash" ] ; then
+    return
+  fi
+  # no, the user didn't override the Post-Si phase --> complain
+  echo "Error: This chip is already in the post-silicon phase. Therefore this"
+  echo "command is disabled. To enable this command, use the"
+  echo "  --override-post-si $PostSiHash"
+  echo "parameter."
+  exit 1
+}
+
+CurrentUnit=""
+UnitBase=""
+CurrentApp=""
+
+function FindCurrentUnit {
+  # use PWD
+  UnitBase="$(pwd)"
+  # iterate upwards
+  while [ -n "$UnitBase" -a ! -r "$UnitBase/.chll-unit" ] ; do
+    UnitBase="${UnitBase%/*}"
+  done
+  # did we find a unit base directory?
+  if [ ! -r "$UnitBase/.chll-unit" ] ; then
+    echo "Error: You are not below any unit base directory."
+    exit 1
+  fi
+  CurrentUnit="$(cat "$UnitBase/.chll-unit")"
+  UnitLC=${CurrentUnit,,}
+  UnitBaseName=${UnitBase##*/}
+  if [ "$UnitLC" != "$UnitBaseName" ] ; then
+    echo "Error: Your unit base directory \"$UnitBaseName\" is not the lower-case"
+    echo "       version of the unit name \"$CurrentUnit\""
+    exit 1
+  fi
+}
+
+function FindCurrentApp {
+  if [ -n "$CurrentApp" ] ; then
+    # already set
+    return
+  fi
+  # use PWD
+  AppBase="$(pwd)"
+  # iterate upwards
+  while [ -n "$AppBase" -a ! -r "$AppBase/.chll-app" ] ; do
+    AppBase="${AppBase%/*}"
+  done
+  # did we find a app base directory?
+  if [ ! -r "$AppBase/.chll-app" ] ; then
+    echo "Error: You are not below any app base directory."
+    exit 1
+  fi
+  CurrentApp="$(cat "$AppBase/.chll-app")"
+  AppLC=${CurrentApp,,}
+  AppBaseName=${AppBase##*/}
+  if [ "$AppLC" != "$AppBaseName" ] ; then
+    echo "Error: Your app base directory \"$AppBaseName\" is not the lower-case"
+    echo "       version of the app name \"$CurrentApp\""
+    exit 1
+  fi
+}
+
+# Check if the current app. is an ex.app
+# returns: 0 ... it is an ex.app
+#          1 ... it is not an ex.app
+function IsExApp {
+  FindChipBase
+  ReconfBase="$ChipBase/units/reconfmodule"
+  FindCurrentApp
+  (
+    echo "source $ReconfBase/chll/scripts/setup-exapps.tcl"
+    echo "if {[lsearch -exact \$ExApps \"$CurrentApp\"] >= 0} {"
+    echo "  # yes, this is an ex.app"
+    echo "  exit 0"
+    echo "} else {"
+    echo "  # no, this is not an ex.app"
+    echo "  exit 1"
+    echo "}"
+  ) | tclsh
+  return $?
+}
+
+function FindCurrentCell {
+  # use PWD
+  CellBase="$(pwd)"
+  # iterate upwards
+  while [ -n "$CellBase" -a ! -r "$CellBase/.chll-cell" ] ; do
+    CellBase="${CellBase%/*}"
+  done
+  # did we find a cell base directory?
+  if [ ! -r "$CellBase/.chll-cell" ] ; then
+    echo "Error: You are not below any cell base directory."
+    exit 1
+  fi
+  CurrentCell="$(cat "$CellBase/.chll-cell")"
+  CellLC=${CurrentCell,,}
+  CellBaseName=${CellBase##*/}
+  if [ "$CellLC" != "$CellBaseName" ] ; then
+    echo "Error: Your cell base directory \"$CellBaseName\" is not the lower-case"
+    echo "       version of the cell name \"$CurrentCell\""
+    exit 1
+  fi
+}
+
+function CreateNewChip {
+  # Parse Options
+  while [ $# -gt 0 ] ; do
+    case "$1" in
+      -o)
+        shift
+        if [ $# -lt 1 ] ; then
+          echo "Error: Option -o requires an argument"
+          exit 1
+        fi
+        ChipBase="$1"
+        shift
+        ;;
+      *)
+        echo "Error: Invalid option \"$1\""
+        exit 1
+        ;;
+    esac
+  done
+  # resolve relative path
+  ChipBase="$(readlink -m "$ChipBase")"
+  # Create directory
+  echo "Creating new chip in $ChipBase"
+  if [ ! -d "$ChipBase" ] ; then
+    mkdir -p "$ChipBase"
+  fi
+  cp --recursive --no-clobber "$TEMPLATEDIR/chip/"* "$TEMPLATEDIR/chip/".[^.]* "$ChipBase"
+}
+
+function CreateNewUnit {
+  FindChipBase
+  if [ $# -lt 1 ] ; then
+    echo "Error: Unit name required"
+    exit 1
+  fi
+  Unit="$1"
+  shift
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  if [ -d "$UnitBase" ] ; then
+    echo "Error: Unit in $UnitBase already exists"
+    exit 1
+  fi
+  echo "Creating unit $Unit in $UnitBase"
+  cp --recursive --no-clobber "$TEMPLATEDIR/unit/" "$UnitBase"
+  echo "$Unit" > "$UnitBase/.chll-unit"
+}
+
+function IsVHDLTestbench {
+  Filename="$1"
+  FLC="${Filename,,}"    # convert to lower case
+  # first test: filename matches "*_tb.vhd*"
+  if [ -z "${FLC##*_tb.vhd*}" ] ; then
+    return 0
+  fi
+  # second test: architecture name is "behavior"
+  sed -r 's/--.*$//'  "$Filename" | grep -qi 'architecture behavior' && return 0
+  # third test: the file contains "wait for" or "wait until" or "report"
+  sed -r 's/--.*$//'  "$Filename" | grep -qie '(wait for |wait until |report )' && return 0
+  # nope, no testbench
+  return 1
+}
+
+function IsVerilogTestbench {
+  Filename="$1"
+  FLC="${Filename,,}"    # convert to lower case
+  # first test: filename matches "*_tb.v*"
+  if [ -z "${FLC##*_tb.v}" ] ; then
+    return 0
+  fi
+  # second test: architecture name is "behavior"
+  sed -r 's|//.*$||'  "$Filename" | grep -qi 'initial begin' && return 0
+  # third test: the file contains "wait for" or "wait until" or "report"
+  sed -r 's|//.*$||'  "$Filename" | grep -qie '(\$display|\$finish|#)' && return 0
+  # nope, no testbench
+  return 1
+}
+
+
+function ImportNewUnit {
+  FindChipBase
+  if [ $# -lt 2 ] ; then
+    echo "Error: Unit name and source path required"
+    exit 1
+  fi
+  # parameter 1: unit name
+  Unit="$1"
+  shift
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+  # parameter 2: source path
+  SourcePath="$1"
+  SourcePath="$(readlink -m "$SourcePath")"        # resolve relative path
+  if [ ! -d "$SourcePath" ] ; then
+    echo "Error: Source path $SoucePath doesn't exist"
+    exit 1
+  fi
+  # first create a new empty unit if it doesn't yet exist
+  if [ ! -d "$UnitBase" ] ; then
+    CreateNewUnit "$Unit"
+  fi
+  # temp file to be added to ./sim/make.sh
+  CompileCommands="$(mktemp --tmpdir="$UnitBase/sim" --suffix=".inc" "compile-XXXXXX")"
+  # copy all VHDL source files
+  find "$SourcePath" -iname '*.vhd*' | while read ; do
+    # prepare
+    Filename="${REPLY}"
+    Basename="$(basename $Filename)"
+    FLC="${Filename,,}"    # convert to lower case
+    RelFilename=".../${Filename##$SourcePath/}"
+    RFLen=${#RelFilename}
+    Justify="                                          "
+    Justify="${Justify:$RFLen}"  # take everything after the length of $RelFilename
+    # sort out some files
+    [ -z "${FLC##*~}" ] && continue
+    [ -z "${FLC##*.bak}" ] && continue
+    [ -z "${FLC##*_primary.vhd}" ] && continue
+    # check if it is a testbench file
+    if $(IsVHDLTestbench "$Filename") ; then
+      Sub="tb"
+      VcomVersion="-2002"
+      VcomPath="\$APPTEST_PATH"
+    else
+      Sub="vhdl"
+      VcomVersion="-93  "
+      VcomPath="\$APPVHDL_PATH"
+    fi
+    # check before overwrite
+    if [ -r "$UnitBase/$Sub/$Basename" ] ; then
+      echo "Warning: Not importing $RelFilename, because $RelUnitBase/$Sub/$Basename already exists."
+      continue
+    fi
+    # import
+    echo "Importing $RelFilename$Justify to $RelUnitBase/$Sub/"
+    cp "$Filename" "$UnitBase/$Sub/"
+    # create ModelSim compile command
+    echo "vcom \${VCOM_OPTS} -work work $VcomVersion $VcomPath/$Basename" >> $CompileCommands
+  done
+  # copy all Verilog source files
+  find "$SourcePath" -iname '*.v' | while read ; do
+    # prepare
+    Filename="${REPLY}"
+    Basename="$(basename $Filename)"
+    FLC="${Filename,,}"    # convert to lower case
+    RelFilename=".../${Filename##$SourcePath/}"
+    RFLen=${#RelFilename}
+    Justify="                                          "
+    Justify="${Justify:$RFLen}"  # take everything after the length of $RelFilename
+    # sort out some files
+    [ -z "${FLC##*~}" ] && continue
+    [ -z "${FLC##*.bak}" ] && continue
+    # check if it is a testbench file
+    if $(IsVerilogTestbench "$Filename") ; then
+      Sub="tb"
+      VlogPath="\$APPTEST_PATH"
+    else
+      Sub="verilog"
+      VlogPath="\$APPVLOG_PATH"
+    fi
+    # check before overwrite
+    if [ -r "$UnitBase/$Sub/$Basename" ] ; then
+      echo "Warning: Not importing $RelFilename, because $RelUnitBase/$Sub/$Basename already exists."
+      continue
+    fi
+    # import
+    echo "Importing $RelFilename$Justify to $RelUnitBase/$Sub/"
+    cp "$Filename" "$UnitBase/$Sub/"
+    # create ModelSim compile command
+    echo "vlog \${VLOG_OPTS} -work work       $VlogPath/$Basename" >> "$CompileCommands"
+  done
+  echo
+  echo "Prepared ModelSim compile commands in $CompileCommands. Be sure to add them"
+  echo "to $UnitBase/sim-rtl/make.sh and sort"
+  echo "them in the appropriate order."
+}
+
+##############################################################################
+# Create new unit especially for the reconfigurable module
+#
+function NewReconfModule {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  Unit="ReconfModule"  # fixed name
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+  # create new unit
+  CreateNewUnit "$Unit"
+  # extend with additional stuff
+  echo "Extending $Unit for reconfigurable module."
+  cp --recursive --no-clobber "$TEMPLATEDIR/reconfmodule/"* "$UnitBase/"
+}
+
+##############################################################################
+# Characterize parent module: synthesize to ILang, and find unused signals 
+#
+# User Setup:
+#  - Yosys script:   .../chll/scripts/characterize-parent.tcl
+#
+function CharacterizeParent {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  # must be executed from reconfmodule unit
+  FindCurrentUnit
+  if [ "$CurrentUnit" != "ReconfModule" ] ; then
+    echo "Error: This must be executed from the ReconfModule unit directory."
+    exit 1
+  fi
+
+  Unit="$CurrentUnit"
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+
+  ############################################################################
+  # Use yosys to characterize the parent module
+  # 
+  # setup
+  LogFile="$UnitBase/chll/log/characterize-parent.log"
+  StubnetsModule="$BASEDIR/yosys-plugin-stubnets/stubnets.so"
+  Script="$UnitBase/chll/scripts/characterize-parent.tcl"
+  StubFile="$UnitBase/chll/out/parent-stubnets.txt"
+  ParentILang="$UnitBase/chll/out/parent.il"
+  # set environment variables used by Yosys TCL script
+  export UNIT_BASE="$UnitBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  # run
+  echo "Running Yosys to characterize parent module."
+  echo "  Script:   $Script"
+  echo "  Stubnets: $StubFile"
+  echo "  Netlist:  $ParentILang"
+  echo "  Log:      $LogFile"
+  $YOSYS -q -l "$LogFile" -m "$StubnetsModule" -c "$Script"
+  #gdb --args $YOSYS -l "$LogFile" -m "$StubnetsModule" -c "$Script"
+  if [ $? -ne 0 ] ; then
+    echo "Error running Yosys. See its logfile $LogFile."
+    exit 1
+  fi
+  # now $ILangFile holds the netlist, and $StubFile holds a
+  # list of all unused ports and signals
+}
+
+##############################################################################
+# List all reconfigurable signals (and test their setup script)
+#
+# User Setup:
+#  - Flow script:   .../chll/scripts/setup-reconf-signals.tcl
+#  - Flow script:   .../chll/scripts/list-reconf-signals.tcl
+#
+function ListReconfSignals {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  # must be executed from reconfmodule unit
+  FindCurrentUnit
+  if [ "$CurrentUnit" != "ReconfModule" ] ; then
+    echo "Error: This must be executed from the ReconfModule unit directory."
+    exit 1
+  fi
+
+  Unit="$CurrentUnit"
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+
+  # setup
+  StubFile="$UnitBase/chll/out/parent-stubnets.txt"
+  ParentILang="$UnitBase/chll/out/parent.il"
+  Script="$UnitBase/chll/scripts/list-reconf-signals.tcl"
+  LogFile="$UnitBase/chll/log/list-reconf-signals.log"
+
+  # set environment variables used by TCL script
+  export UNIT_BASE="$UnitBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export IN_FILE="$InFile"
+  # run
+  echo "Correcting list of unused ports of unit "$Unit" in $RelUnitBase."
+  echo "  Script:   $Script"
+  echo "  Stubnets: $StubFile"
+  echo "  Netlist:  $ILangFile"
+  echo "  Log:      $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Check the reconfigurable module and the setup of its signals
+#
+# User Setup:
+#  - Flow script:   .../chll/scripts/check-reconf-module
+#
+function CheckReconfModule {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  # must be executed from reconfmodule unit
+  FindCurrentUnit
+  if [ "$CurrentUnit" != "ReconfModule" ] ; then
+    echo "Error: This must be executed from the ReconfModule unit directory."
+    exit 1
+  fi
+
+  Unit="$CurrentUnit"
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+
+  # setup
+  StubFile="$UnitBase/chll/out/parent-stubnets.txt"
+  ParentILang="$UnitBase/chll/out/parent.il"
+  Script="$UnitBase/chll/scripts/check-reconf-module.tcl"
+  LogFile="$UnitBase/chll/log/check-reconf-module.log"
+
+  # set environment variables used by TCL script
+  export UNIT_BASE="$UnitBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export IN_FILE="$InFile"
+  # run
+  echo "Checking setup of reconfigurable signals of unit "$Unit" in $RelUnitBase."
+  echo "  Script:   $Script"
+  echo "  Stubnets: $StubFile"
+  echo "  Netlist:  $ParentILang"
+  echo "  Log:      $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Create a new application
+#
+function CreateNewApp {
+  FindChipBase
+  if [ $# -lt 1 ] ; then
+    echo "Error: Application name required"
+    exit 1
+  fi
+  App="$1"
+  shift
+  AppLC="${App,,}"   # convert to lower case
+  AppBase="$ChipBase/apps/$AppLC"
+  if [ -d "$AppBase" ] ; then
+    echo "Error: App in $AppBase already exists"
+    exit 1
+  fi
+  echo "Creating app $App in $AppBase"
+  cp --recursive --no-clobber "$TEMPLATEDIR/app/" "$AppBase"
+  echo "$App" > "$AppBase/.chll-app"
+}
+
+##############################################################################
+# Create application templates
+#
+function CreateAppTemplates {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  FindCurrentApp  # will exit if not inside an app directory
+
+  App="$CurrentApp"
+  AppLC="${App,,}"   # convert to lower case
+  AppBase="$ChipBase/apps/$AppLC"
+  RelAppBase=".../${AppBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+
+  # setup
+  Script="$AppBase/chll/scripts/create-templates.tcl"
+  LogFile="$AppBase/chll/log/create-templates.log"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+
+  # set environment variables used by TCL script
+  export CHIP_BASE="$ChipBase"
+  export APP_BASE="$AppBase"
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export RECONF_BASE="$ReconfBase"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  #export IN_FILE="$InFile"
+  # run
+  echo "Setup and creating template files for app "$App" in $RelAppBase."
+  echo "  Script:   $Script"
+  echo "  Stubnets: $StubFile"
+  echo "  Parent:   $ParentILang"
+  echo "  Log:      $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Synthesize the application to check it
+#
+function CheckApp {
+  FindChipBase
+  if [ $# -gt 1 ] ; then
+    echo "Error: $0 check-app [-interactive|-post-si]"
+    exit 1
+  fi
+  INTERACTIVE=false
+  POSTSI=false
+  if [ $# -eq 1 ] ; then
+    if [ "$1" = "-interactive" ] ; then
+      INTERACTIVE=true
+    elif [ "$1" = "-post-si" ] ; then
+      POSTSI=true
+    else
+      echo "Error: $0 check-app [-interactive|-post-si]"
+      exit 1
+    fi
+  fi
+
+  FindCurrentApp  # will exit if not inside an app directory
+
+  App="$CurrentApp"
+  AppLC="${App,,}"   # convert to lower case
+  AppBase="$ChipBase/apps/$AppLC"
+  RelAppBase=".../${AppBase##$ChipBase/}"
+
+  if $POSTSI ; then
+    CheckAppPostSi
+    return
+  fi
+
+  # setup
+  Script="$AppBase/chll/scripts/synthesize.tcl"
+  LogFile="$AppBase/chll/log/check-synthesize.log"
+  ILangFile="$AppBase/chll/out/${AppLC}.il"
+  VLogFile="$AppBase/chll/out/${AppLC}.v"
+
+  # set environment variables used by TCL script
+  export APP_BASE="$AppBase"
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export INTERACTIVE
+  export EXTRACT_FSM="false"
+  export APP_ILANG_OUT="$ILangFile"
+  export APP_VLOG_OUT="$VLogFile"
+  # run
+  echo "Running Yosys to synthesize application."
+  echo "  Script:   $Script"
+  echo "  Netlist:  $ILangFile"
+  echo "  Verilog:  $VLogFile"
+  echo "  Log:      $LogFile"
+  if $INTERACTIVE ; then
+    $YOSYS    -l "$LogFile" -c "$Script"
+  else
+    $YOSYS -q -l "$LogFile" -c "$Script"
+  fi
+  #gdb --args $YOSYS ...
+  if [ $? -ne 0 ] ; then
+    echo "Error running Yosys. See its logfile $LogFile."
+    exit 1
+  fi
+  # if not interactive, $ILangFile holds the netlist
+  if $INTERACTIVE ; then
+    return
+  fi
+
+  ############################################################################
+  ## now check the netlist
+
+  ReconfBase="$ChipBase/units/reconfmodule"
+
+  # setup
+  Script="$AppBase/chll/scripts/check.tcl"
+  LogFile="$AppBase/chll/log/check.log"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Checking synthesized app "$App" in $RelAppBase."
+  echo "  Script:   $Script"
+  echo "  Log:      $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+  
+}
+
+##############################################################################
+# Synthesize the application and extract the FSM(s)
+#
+function ExtractFSM {
+  FindChipBase
+  if [ $# -gt 1 ] ; then
+    echo "Error: $0 extract-fsm [-interactive]"
+    exit 1
+  fi
+  if [ $# -eq 1 ] ; then
+    if [ "$1" != "-interactive" ] ; then
+      echo "Error: $0 extract-fsm [-interactive]"
+      exit 1
+    fi
+    INTERACTIVE=true
+  else
+    INTERACTIVE=false
+  fi
+
+  FindCurrentApp  # will exit if not inside an app directory
+
+  App="$CurrentApp"
+  AppLC="${App,,}"   # convert to lower case
+  AppBase="$ChipBase/apps/$AppLC"
+  RelAppBase=".../${AppBase##$ChipBase/}"
+
+  # setup
+  Script="$AppBase/chll/scripts/synthesize.tcl"
+  LogFile="$AppBase/chll/log/extract-fsm-synthesize.log"
+  ILangFile="$AppBase/chll/out/${AppLC}-fsm.il"
+  VLogFile="$AppBase/chll/out/${AppLC}-fsm.v"
+
+  # set environment variables used by TCL script
+  export APP_BASE="$AppBase"
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export INTERACTIVE
+  export EXTRACT_FSM="true"
+  export APP_ILANG_OUT="$ILangFile"
+  export APP_VLOG_OUT="$VLogFile"
+  # run
+  echo "Running Yosys to synthesize application and extract its FSMs."
+  echo "  Script:   $Script"
+  echo "  Netlist:  $ILangFile"
+  echo "  Verilog:  $VLogFile"
+  echo "  Log:      $LogFile"
+  if $INTERACTIVE ; then
+    $YOSYS    -l "$LogFile" -c "$Script"
+  else
+    $YOSYS -q -l "$LogFile" -c "$Script"
+  fi
+  #gdb --args $YOSYS ...
+  if [ $? -ne 0 ] ; then
+    echo "Error running Yosys. See its logfile $LogFile."
+    exit 1
+  fi
+
+  ############################################################################
+  ## now check the FSMs in the netlist
+
+  # setup
+  Script="$AppBase/chll/scripts/check-trfsm.tcl"
+  LogFile="$AppBase/chll/log/check-trfsm.log"
+  ILangFile="$AppBase/chll/out/${AppLC}-fsm-flat.il"
+  # set environment variables used by TCL script
+  export APP_BASE="$AppBase"
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export APP_ILANG_OUT="$ILangFile"
+  # run
+  echo "Running Trfsmgen to check Yosys' \$fsm cells."
+  echo "  Script:   $Script"
+  echo "  Netlist:  $ILangFile"
+  echo "  Log:      $LogFile"
+  $TRFSMGEN -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb --args $TRFSMGEN -b -f "$Script"
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running Trfsmgen See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Replace Yosys' $fsm cells by TR-FSMs
+#
+function InsertTRFSM {
+  FindChipBase
+  if [ $# -ne 1 ] ; then
+    echo "Error: Input netlist type required. Use -fsm, -extract or -post-si"
+    exit 1
+  fi
+  case "$1" in
+    -fsm)
+      MODE="fsm"
+      ;;
+    -extract)
+      MODE="extract"
+      ;;
+    -post-si)
+      MODE="post-si"
+      ;;
+    *)
+      echo "Error: Invalid netlist type. Use -fsm, -extract or -post-si"
+      exit 1
+  esac
+  FindCurrentApp  # will exit if not inside an app directory
+
+  App="$CurrentApp"
+  AppLC="${App,,}"   # convert to lower case
+  AppBase="$ChipBase/apps/$AppLC"
+  RelAppBase=".../${AppBase##$ChipBase/}"
+
+  # setup
+  case "$MODE" in
+    fsm)
+      Script="$AppBase/chll/scripts/insert-trfsm.tcl"
+      LogFile="$AppBase/chll/log/insert-trfsm.log"
+      OutDir="$AppBase/chll/out"
+      OutBase="${AppLC}-fsm-"
+      ILangFile="$OutDir/${AppLC}-fsm-flat.il"
+      VLogOutFile="$OutDir/${AppLC}-trfsm.v"
+      ls -l $ILangFile
+      # check that FSM Extraction (flowcmd extract-fsm) was already done
+      if [ ! -f "$ILangFile" ] ; then
+        echo "Error: You have to run FSM extraction before inserting TR-FSMs. Use 'flowcmd extract-fsm'."
+        exit 1
+      fi
+      ;;
+    extract)
+      Script="$AppBase/chll/scripts/insert-trfsm.tcl"
+      LogFile="$AppBase/chll/log/insert-extract-trfsm.log"
+      OutDir="$AppBase/chll/out"
+      OutBase="${AppLC}-extract-"
+      ILangFile="$OutDir/${AppLC}-extract.il"
+      VLogOutFile="$OutDir/${AppLC}-extract-trfsm.v"
+      # check that Cell Extraction (flowcmd extract) was already done
+      if [ ! -f "$ILangFile" ] ; then
+        echo "Error: You have to run cell extraction before inserting TR-FSMs. Use 'flowcmd extract'."
+        exit 1
+      fi
+      ;;
+    post-si)
+      InsertTRFSMPostSi
+      return
+      ;;
+  esac
+
+  # set environment variables used by TCL script
+  export CHIP_BASE="$ChipBase"
+  export APP_BASE="$AppBase"
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export APP_OUT_DIR="$OutDir"
+  export APP_OUT_BASE="$OutBase"
+  export APP_ILANG_OUT="$ILangFile"
+  export APP_VLOG_OUT="$VLogOutFile"
+  export MODE
+  # run
+  echo "Running Trfsmgen to replace Yosys' \$fsm cells with TR-FSMs."
+  echo "  Script:   $Script"
+  echo "  Netlist:  $ILangFile"
+  echo "  Out base: $OutBase"
+  echo "  Verilog:  $VLogOutFile"
+  echo "  Log:      $LogFile"
+  $TRFSMGEN -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb --args $TRFSMGEN -b -f "$Script"
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running Trfsmgen See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Create a new cell
+#
+function CreateNewCell {
+  FindChipBase
+  if [ $# -lt 1 ] ; then
+    echo "Error: Cell name required"
+    exit 1
+  fi
+  Cell="$1"
+  shift
+  CellLC="${Cell,,}"   # convert to lower case
+  CellBase="$ChipBase/celllib/$CellLC"
+  if [ -d "$CellBase" ] ; then
+    echo "Error: Cell in $CellBase already exists"
+    exit 1
+  fi
+  echo "Creating cell $Cell in $CellBase"
+  cp --recursive --no-clobber "$TEMPLATEDIR/cell/" "$CellBase"
+  echo "$Cell" > "$CellBase/.chll-cell"
+}
+
+##############################################################################
+# Create cell templates
+#
+function CreateCellTemplates {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  FindCurrentCell  # will exit if not inside an cell directory
+
+  Cell="$CurrentCell"
+  CellLC="${Cell,,}"   # convert to lower case
+  CellBase="$ChipBase/celllib/$CellLC"
+  RelCellBase=".../${CellBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+
+  # setup
+  Script="$CellBase/chll/scripts/create-templates.tcl"
+  LogFile="$CellBase/chll/log/create-templates.log"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+
+  # set environment variables used by TCL script
+  export CHIP_BASE="$ChipBase"
+  export CELL_BASE="$CellBase"
+  export CELL_NAME="$Cell"
+  export CELL_NAME_LC="$CellLC"
+  export RECONF_BASE="$ReconfBase"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  #export IN_FILE="$InFile"
+  # run
+  echo "Setup and creating template files for cell "$Cell" in $RelCellBase."
+  echo "  Script:   $Script"
+  echo "  Stubnets: $StubFile"
+  echo "  Parent:   $ParentILang"
+  echo "  Log:      $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Synthesize the cell to check it
+#
+function CheckCell {
+  FindChipBase
+  if [ $# -gt 1 ] ; then
+    echo "Error: $0 check-cell [-interactive]"
+    exit 1
+  fi
+  if [ $# -eq 1 ] ; then
+    if [ "$1" != "-interactive" ] ; then
+      echo "Error: $0 check-cell [-interactive]"
+      exit 1
+    fi
+    INTERACTIVE=true
+  else
+    INTERACTIVE=false
+  fi
+
+  FindCurrentCell  # will exit if not inside an cell directory
+
+  Cell="$CurrentCell"
+  CellLC="${Cell,,}"   # convert to lower case
+  CellBase="$ChipBase/celllib/$CellLC"
+  RelCellBase=".../${CellBase##$ChipBase/}"
+
+  # setup
+  Script="$CellBase/chll/scripts/synthesize.tcl"
+  LogFile="$CellBase/chll/log/check-synthesize.log"
+  ILangFile="$CellBase/chll/out/${CellLC}.il"
+  VLogFile="$CellBase/chll/out/${CellLC}.v"
+
+  # set environment variables used by TCL script
+  export CELL_BASE="$CellBase"
+  export CELL_NAME="$Cell"
+  export CELL_NAME_LC="$CellLC"
+  export INTERACTIVE
+  export EXTRACT_FSM="false"
+  export CELL_ILANG_OUT="$ILangFile"
+  export CELL_VLOG_OUT="$VLogFile"
+  # run
+  echo "Running Yosys to synthesize cell."
+  echo "  Script:   $Script"
+  echo "  Netlist:  $ILangFile"
+  echo "  Verilog:  $VLogFile"
+  echo "  Log:      $LogFile"
+  if $INTERACTIVE ; then
+    $YOSYS    -l "$LogFile" -c "$Script"
+  else
+    $YOSYS -q -l "$LogFile" -c "$Script"
+  fi
+  #gdb --args $YOSYS ...
+  if [ $? -ne 0 ] ; then
+    echo "Error running Yosys. See its logfile $LogFile."
+    exit 1
+  fi
+  # if not interactive, $ILangFile holds the netlist
+  if $INTERACTIVE ; then
+    return
+  fi
+
+  ############################################################################
+  ## now check the netlist
+
+  ReconfBase="$ChipBase/units/reconfmodule"
+
+  # setup
+  Script="$CellBase/chll/scripts/check.tcl"
+  LogFile="$CellBase/chll/log/check.log"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Checking synthesized cell "$Cell" in $RelCellBase."
+  echo "  Script:   $Script"
+  echo "  Log:      $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+  
+}
+
+##############################################################################
+# Check cell library
+#
+function CheckCellLib {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  # must be executed from reconfmodule unit
+  FindCurrentUnit
+  if [ "$CurrentUnit" != "ReconfModule" ] ; then
+    echo "Error: This must be executed from the ReconfModule unit directory."
+    exit 1
+  fi
+
+  Unit="$CurrentUnit"
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+  CellLibBase="$ChipBase/celllib"
+
+  # setup
+  Script="$UnitBase/chll/scripts/check-celllib.tcl"
+  LogFile="$UnitBase/chll/log/check-celllib.log"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+  CellLibFile="$ReconfBase/chll/out/celllib.il"
+  CellLibMaps="$ReconfBase/chll/out/celllib-maps.il"
+
+  # set environment variables used by TCL script
+  export RECONF_BASE="$ReconfBase"
+  export CELLLIB_BASE="$CellLibBase"
+  export CELLLIB_FILE="$CellLibFile"
+  export CELLLIB_MAPS="$CellLibMaps"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  # run
+  echo "Checking cell library."
+  echo "  Script:   $Script"
+  echo "  Cell Lib: $CellLibFile"
+  echo "  Cell Maps: $CellLibMaps"
+  echo "  Log:      $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Extract cells from cell library from application
+#
+function Extract {
+  FindChipBase
+  if [ $# -gt 1 ] ; then
+    echo "Error: $0 extract [-interactive]"
+    exit 1
+  fi
+  if [ $# -eq 1 ] ; then
+    if [ "$1" != "-interactive" ] ; then
+      echo "Error: $0 extract [-interactive]"
+      exit 1
+    fi
+    INTERACTIVE=true
+  else
+    INTERACTIVE=false
+  fi
+
+  FindCurrentApp  # will exit if not inside an app directory
+
+  App="$CurrentApp"
+  AppLC="${App,,}"   # convert to lower case
+  AppBase="$ChipBase/apps/$AppLC"
+  RelAppBase=".../${AppBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+  CellLibBase="$ChipBase/celllib"
+
+  # setup
+  Script="$AppBase/chll/scripts/extract.tcl"
+  LogFile="$AppBase/chll/log/extract.log"
+  ILangInFile="$AppBase/chll/out/${AppLC}-fsm.il"
+  ILangOutFile="$AppBase/chll/out/${AppLC}-extract.il"
+  VLogOutFile="$AppBase/chll/out/${AppLC}-extract.v"
+  CellLibFile="$ReconfBase/chll/out/celllib.il"
+  CellLibMaps="$ReconfBase/chll/out/celllib-maps.il"
+
+  # set environment variables used by TCL script
+  export CELLLIB_FILE="$CellLibFile"
+  export CELLLIB_MAPS="$CellLibMaps"
+  export APP_BASE="$AppBase"
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export INTERACTIVE
+  export APP_ILANG_IN="$ILangInFile"
+  export APP_ILANG_OUT="$ILangOutFile"
+  export APP_VLOG_OUT="$VLogOutFile"
+  # run
+  echo "Running Yosys for peripheral inferrence from application $App."
+  echo "  Script:          $Script"
+  echo "  Cell Library:    $CellLibFile"
+  echo "  Cell Lib Maps:   $CellLibMaps"
+  echo "  Source Netlist:  $ILangInFile"
+  echo "  Result Netlist:  $ILangOutFile"
+  echo "  Result Verilog:  $VLogOutFile"
+  echo "  Log:             $LogFile"
+  if $INTERACTIVE ; then
+    $YOSYS    -l "$LogFile" -c "$Script"
+  else
+    $YOSYS -q -l "$LogFile" -c "$Script"
+  fi
+  #gdb --args $YOSYS ...
+  if [ $? -ne 0 ] ; then
+    echo "Error running Yosys. See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Check the netlist with extracted cells
+#
+function CheckExtract {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  FindCurrentApp  # will exit if not inside an app directory
+
+  App="$CurrentApp"
+  AppLC="${App,,}"   # convert to lower case
+  AppBase="$ChipBase/apps/$AppLC"
+  RelAppBase=".../${AppBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+  CellLibBase="$ChipBase/celllib"
+
+  ReconfBase="$ChipBase/units/reconfmodule"
+
+  # setup
+  Script="$AppBase/chll/scripts/check.tcl"
+  LogFile="$AppBase/chll/log/check-extract.log"
+  ILangExtract="$AppBase/chll/out/${AppLC}-extract.il"
+  CellLibFile="$ReconfBase/chll/out/celllib.il"
+  CellLibMaps="$ReconfBase/chll/out/celllib-maps.il"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+  # set environment variables used by TCL script
+  export CELLLIB_BASE="$CellLibBase"
+  export CELLLIB_FILE="$CellLibFile"
+  export CELLLIB_MAPS="$CellLibMaps"
+  export APP_BASE="$AppBase"
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export EXTRACTED="true"
+  export APP_ILANG_OUT="$ILangExtract"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Checking extracted netlist of application $App."
+  echo "  Script:          $Script"
+  echo "  Cell Library:    $CellLibFile"
+  echo "  Cell Lib Maps:   $CellLibMaps"
+  echo "  Source Netlist:  $ILangExtract"
+  echo "  Log:             $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Check all example applications
+#
+function CheckExApps {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  # must be executed from reconfmodule unit
+  FindCurrentUnit
+  if [ "$CurrentUnit" != "ReconfModule" ] ; then
+    echo "Error: This must be executed from the ReconfModule unit directory."
+    exit 1
+  fi
+
+  Unit="$CurrentUnit"
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+  AppsBase="$ChipBase/apps"
+  CellLibBase="$ChipBase/celllib"
+  #UnitOutBase="$UnitBase/chll/out"
+
+  # setup
+  Script="$UnitBase/chll/scripts/check-exapps-trfsm.tcl"
+  LogFile="$UnitBase/chll/log/check-exapps-trfsm.log"
+
+  # set environment variables used by TCL script
+  export RECONF_BASE="$ReconfBase"
+  export APPS_BASE="$AppsBase"
+  # run
+  echo "Checking example applications."
+  echo "  Script:   $Script"
+  echo "  Log:      $LogFile"
+  $TRFSMGEN -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb --args $TRFSMGEN -b -f "$Script"
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running Trfsmgen See its logfile $LogFile."
+    exit 1
+  fi
+
+  echo ""
+
+  # setup
+  Script="$UnitBase/chll/scripts/check-exapps-flow.tcl"
+  LogFile="$UnitBase/chll/log/check-exapps-flow.log"
+  CellLibFile="$ReconfBase/chll/out/celllib.il"
+  CellLibMaps="$ReconfBase/chll/out/celllib-maps.il"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+  
+  # set environment variables used by TCL script
+  export RECONF_BASE="$ReconfBase"
+  export APPS_BASE="$AppsBase"
+  export CELLLIB_BASE="$CellLibBase"
+  export CELLLIB_FILE="$CellLibFile"
+  export CELLLIB_MAPS="$CellLibMaps"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Checking extracted netlist of example applications."
+  echo "  Script:          $Script"
+  echo "  Cell Library:    $CellLibFile"
+  echo "  Cell Lib Maps:   $CellLibMaps"
+  echo "  Log:             $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Check application for Post-Si usage
+#
+function CheckAppPostSi {
+  # $App, $AppLC, $AppBase, and $RelAppBase are already set by the caller
+  CellLibBase="$ChipBase/celllib"
+
+  # setup
+  ScriptBase="$AppBase/chll/scripts"
+  Script="$ScriptBase/check-app-trfsm.tcl"
+  LogFile="$AppBase/chll/log/check-app-trfsm.log"
+  OutDir="$AppBase/chll/out"
+  ILangFile="$OutDir/${AppLC}-extract.il"
+
+  # set environment variables used by TCL script
+  export APP_NAME="$App"
+  export APP_ILANG_OUT="$ILangFile"
+  # run
+  echo "Checking application for Post-Si."
+  echo "  Script:   $Script"
+  echo "  Netlist:  $ILangFile"
+  echo "  Log:      $LogFile"
+  $TRFSMGEN -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb --args $TRFSMGEN -b -f "$Script"
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running Trfsmgen See its logfile $LogFile."
+    exit 1
+  fi
+
+  echo ""
+
+  # setup
+  Script="$ScriptBase/check-app-flow.tcl"
+  LogFile="$AppBase/chll/log/check-app-flow.log"
+  ReconfBase="$ChipBase/units/reconfmodule"
+  CellLibBase="$ChipBase/celllib"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+  
+  # set environment variables used by TCL script
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export APP_ILANG_OUT="$ILangFile"
+  export RECONF_BASE="$ReconfBase"
+  export CELLLIB_BASE="$CellLibBase"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  # run
+  echo "Checking extracted netlist of example applications."
+  echo "  Script:          $Script"
+  echo "  Log:             $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Insert TR-FSMs into all example applications
+#
+function InsertTRFSMs {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  # must be executed from reconfmodule unit
+  FindCurrentUnit
+  if [ "$CurrentUnit" != "ReconfModule" ] ; then
+    echo "Error: This must be executed from the ReconfModule unit directory."
+    exit 1
+  fi
+
+  Unit="$CurrentUnit"
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+  AppsBase="$ChipBase/apps"
+  CellLibBase="$ChipBase/celllib"
+  UnitOutBase="$UnitBase/chll/out"
+
+  # setup
+  Script="$UnitBase/chll/scripts/insert-trfsms.tcl"
+  LogFile="$UnitBase/chll/log/insert-trfsms.log"
+
+  # set environment variables used by TCL script
+  export RECONF_BASE="$ReconfBase"
+  export APPS_BASE="$AppsBase"
+  export UNIT_OUT_BASE="$UnitOutBase"
+  # run
+  echo "Inserting TR-FSMs to all example applications."
+  echo "  Script:   $Script"
+  echo "  Log:      $LogFile"
+  $TRFSMGEN -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb --args $TRFSMGEN -b -f "$Script"
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running Trfsmgen See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Insert TR-FSMs into all example applications
+#
+function InsertTRFSMPostSi {
+  # $App, $AppLC, $AppBase, and $RelAppBase are already set by the caller
+
+  OutDir="$AppBase/chll/out"
+  ILangFile="$OutDir/${AppLC}-extract.il"
+  OutBase="${AppLC}-extract-intersynth-"
+  VLogOutFile="$OutDir/${AppLC}-extract-intersynth.v"
+  ReconfBase="$ChipBase/units/reconfmodule"
+
+  # setup
+  Script="$AppBase/chll/scripts/insert-trfsm-postsi.tcl"
+  LogFile="$AppBase/chll/log/insert-trfsm-postsi.log"
+
+  # set environment variables used by TCL script
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export APP_ILANG_OUT="$ILangFile"
+  export APP_OUT_DIR="$OutDir"
+  export APP_OUT_BASE="$OutBase"
+  export APP_VLOG_OUT="$VLogOutFile"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Inserting TR-FSMs to applications."
+  echo "  Script:   $Script"
+  echo "  Log:      $LogFile"
+  $TRFSMGEN -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb --args $TRFSMGEN -b -f "$Script"
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running Trfsmgen See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Prepare netlist for InterSynth, run InterSynth, check results
+#
+function Intersynth {
+  FindChipBase
+  if [ $# -gt 1 ] ; then
+    echo "Error: $0 intersynth [-post-si]"
+    exit 1
+  fi
+  if [ $# -eq 1 ] ; then
+    if [ "$1" = "-post-si" ] ; then
+      IntersynthPostSi
+      return
+    else
+      echo "Error: $0 intersynth [-post-si]"
+      exit 1
+    fi
+  fi
+
+  # must be executed from reconfmodule unit
+  FindCurrentUnit
+  if [ "$CurrentUnit" != "ReconfModule" ] ; then
+    echo "Error: This must be executed from the ReconfModule unit directory."
+    exit 1
+  fi
+
+  Unit="$CurrentUnit"
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+  AppsBase="$ChipBase/apps"
+  CellLibBase="$ChipBase/celllib"
+  UnitOutBase="$UnitBase/chll/out"
+
+  # setup
+  Script="$UnitBase/chll/scripts/intersynth.tcl"
+  LogFile="$UnitBase/chll/log/prepare-intersynth.log"
+  CellLibFile="$ReconfBase/chll/out/celllib.il"
+  CellLibMaps="$ReconfBase/chll/out/celllib-maps.il"
+  InterSynthFile="$ReconfBase/chll/out/intersynth.txt"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+  
+  # set environment variables used by TCL script
+  export RECONF_BASE="$ReconfBase"
+  export APPS_BASE="$AppsBase"
+  export CELLLIB_BASE="$CellLibBase"
+  export CELLLIB_FILE="$CellLibFile"
+  export CELLLIB_MAPS="$CellLibMaps"
+  export INTERSYNTH_FILE="$InterSynthFile"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Creating InterSynth files."
+  echo "  Script:            $Script"
+  echo "  Cell Library:      $CellLibFile"
+  echo "  Cell Lib Maps:     $CellLibMaps"
+  echo "  InterSynth Script: $InterSynthFile"
+  echo "  Log:               $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+
+  ## now run InterSynth ######################################################
+
+  # setup
+  LogFile="$UnitBase/chll/log/intersynth.log"
+  # run
+  echo "Running InterSynth."
+  echo "  Script: $InterSynthFile"
+  echo "  Log:    $LogFile"
+  $INTERSYNTH "$InterSynthFile" 2>&1 | tee "$LogFile"
+  #gdb --args $INTERSYNTH "$InterSynthFile" 2>&1 | tee "$LogFile"
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running intersynth See its logfile $LogFile."
+    exit 1
+  fi
+  echo "Done."
+  echo
+
+  ## now post-process InterSynth output ######################################
+  (
+    cd "$ReconfBase/chll/out"
+    # use presilicon.tcl to generate presilicon-cellmapping-instances.txt
+    tclsh "$ReconfBase/chll/scripts/gen-cellmapping.tcl" "$ReconfBase/chll/out/presilicon.tcl" > "$ReconfBase/chll/out/presilicon-cellmapping-instances.txt"
+  )
+
+  (
+    echo "source $ReconfBase/chll/scripts/setup-exapps.tcl"
+    echo "foreach App \$ExApps {"
+    echo "  puts \$App"
+    echo "}"
+  ) | tclsh | while read App ; do 
+    (
+      echo "###############################################################################"
+      echo "## $App"
+      AppLC="${App,,}"   # convert to lower case
+      AppOut="$AppsBase/$AppLC/chll/out"
+      AppLog="$AppsBase/$AppLC/chll/log"
+      cd "$AppOut"
+
+      echo "## Running LaTeX to create images of the interconntect tree for application $App"
+      TreesFile="$AppOut/presilicon-trees-$AppLC.tex"
+      LogFile="$AppLog/presilicon-trees-$AppLC.log"
+      echo "  Input:  $TreesFile"
+      echo "  Log:    $LogFile"
+      pdflatex -halt-on-error $TreesFile > $LogFile
+      if [ $? -ne 0 ] ; then
+        echo "There was an error executing LaTeX."
+      fi
+      echo
+  
+      echo "## Running Dot to create schematic for $App"
+      NetlistFile="$AppOut/presilicon-netlist-$AppLC.dot"
+      NetlistImage="$AppOut/presilicon-netlist-$AppLC.svg"
+      echo "  Input:  $NetlistFile"
+      echo "  Output: $NetlistImage"
+      dot -Tsvg -o$NetlistImage $NetlistFile > /dev/null
+      if [ $? -ne 0 ] ; then
+        echo "There was an error executing Dot"
+      fi
+      echo
+    )
+  done
+}
+
+##############################################################################
+# Prepare netlist for InterSynth, run InterSynth, check results
+#
+function IntersynthPostSi {
+  # $ChipBase is already set by the caller
+  FindCurrentApp  # will exit if not inside an app directory
+
+  # setup
+  App="$CurrentApp"
+  AppLC="${App,,}"   # convert to lower case
+  AppBase="$ChipBase/apps/$AppLC"
+  RelAppBase=".../${AppBase##$ChipBase/}"
+  OutDir="$AppBase/chll/out"
+  ILangFile="$OutDir/${AppLC}-extract-intersynth-trfsm.il"
+
+  ReconfBase="$ChipBase/units/reconfmodule"
+  AppsBase="$ChipBase/apps"
+  CellLibBase="$ChipBase/celllib"
+  CellLibFile="$ReconfBase/chll/out/celllib.il"
+  CellLibMaps="$ReconfBase/chll/out/celllib-maps.il"
+  InterSynthFile="$OutDir/intersynth.txt"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+
+  Script="$AppBase/chll/scripts/intersynth-postsi.tcl"
+  LogFile="$AppBase/chll/log/prepare-intersynth.log"
+  
+  # set environment variables used by TCL script
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export APP_ILANG_OUT="$ILangFile"
+  export APP_OUT_DIR="$OutDir"
+
+  export CELLLIB_BASE="$CellLibBase"
+  export CELLLIB_FILE="$CellLibFile"
+  export CELLLIB_MAPS="$CellLibMaps"
+  export INTERSYNTH_FILE="$InterSynthFile"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Creating InterSynth files."
+  echo "  Script:            $Script"
+  echo "  Cell Library:      $CellLibFile"
+  echo "  Cell Lib Maps:     $CellLibMaps"
+  echo "  InterSynth Script: $InterSynthFile"
+  echo "  Log:               $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+
+  echo ""
+
+  ## now run InterSynth ######################################################
+
+  # setup
+  LogFile="$AppBase/chll/log/intersynth.log"
+  # run
+  echo "Running InterSynth."
+  echo "  Script: $InterSynthFile"
+  echo "  Log:    $LogFile"
+  $INTERSYNTH "$InterSynthFile" 2>&1 | tee "$LogFile"
+  #gdb --args $INTERSYNTH "$InterSynthFile" 2>&1 | tee "$LogFile"
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running intersynth See its logfile $LogFile."
+    exit 1
+  fi
+  echo "Done."
+  echo
+
+  ## now post-process InterSynth output ######################################
+  echo "###############################################################################"
+  echo "## $App"
+  AppLog="$AppsBase/$AppLC/chll/log"
+  cd "$OutDir"
+
+  echo "## Running LaTeX to create images of the interconntect tree for application $App"
+  TreesFile="$OutDir/postsilicon-trees-$AppLC.tex"
+  LogFile="$AppLog/postsilicon-trees-$AppLC.log"
+  echo "  Input:  $TreesFile"
+  echo "  Log:    $LogFile"
+  pdflatex -halt-on-error $TreesFile > $LogFile
+  if [ $? -ne 0 ] ; then
+    echo "There was an error executing LaTeX."
+  fi
+  echo
+  
+  echo "## Running Dot to create schematic for $App"
+  NetlistFile="$OutDir/postsilicon-netlist-$AppLC.dot"
+  NetlistImage="$OutDir/postsilicon-netlist-$AppLC.svg"
+  echo "  Input:  $NetlistFile"
+  echo "  Output: $NetlistImage"
+  dot -Tsvg -o$NetlistImage $NetlistFile > /dev/null
+  if [ $? -ne 0 ] ; then
+    echo "There was an error executing Dot"
+  fi
+  echo
+}
+
+##############################################################################
+# Check results of InterSynth
+#
+function CheckIntersynth {
+  FindChipBase
+  if [ $# -gt 1 ] ; then
+    echo "Error: $0 check-intersynth [-post-si]"
+    exit 1
+  fi
+  if [ $# -eq 1 ] ; then
+    if [ "$1" = "-post-si" ] ; then
+      CheckIntersynthPostSi
+      return
+    else
+      echo "Error: $0 check-intersynth [-post-si]"
+      exit 1
+    fi
+  fi
+
+  # must be executed from reconfmodule unit
+  FindCurrentUnit
+  if [ "$CurrentUnit" != "ReconfModule" ] ; then
+    echo "Error: This must be executed from the ReconfModule unit directory."
+    exit 1
+  fi
+
+  Unit="$CurrentUnit"
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+  AppsBase="$ChipBase/apps"
+  CellLibBase="$ChipBase/celllib"
+  UnitOutBase="$UnitBase/chll/out"
+
+  # setup
+  Script="$UnitBase/chll/scripts/check-intersynth.tcl"
+  LogFile="$UnitBase/chll/log/check-intersynth.log"
+  CellLibFile="$ReconfBase/chll/out/celllib.il"
+  CellLibMaps="$ReconfBase/chll/out/celllib-maps.il"
+  InterSynthFile="$ReconfBase/chll/out/intersynth.txt"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+  
+  # set environment variables used by TCL script
+  export CHIP_BASE="$ChipBase"
+  export RECONF_BASE="$ReconfBase"
+  export APPS_BASE="$AppsBase"
+  export CELLLIB_BASE="$CellLibBase"
+  export CELLLIB_FILE="$CellLibFile"
+  export CELLLIB_MAPS="$CellLibMaps"
+  export INTERSYNTH_FILE="$InterSynthFile"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Checking InterSynth results."
+  echo "  Script:            $Script"
+  echo "  Cell Library:      $CellLibFile"
+  echo "  Cell Lib Maps:     $CellLibMaps"
+  echo "  InterSynth Script: $InterSynthFile"
+  echo "  Log:               $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+  echo ""
+
+  Script="$UnitBase/chll/scripts/synthesize-intersynth.tcl"
+  LogFile="$UnitBase/chll/log/synthesize-intersynth.log"
+  InterSynthVlog="$ReconfBase/chll/out/presilicon.v"
+  InterconnectILang="$ReconfBase/chll/out/interconnect.il"
+  InterconnectVLog="$ReconfBase/chll/out/interconnect.v"
+
+  # set environment variables used by TCL script
+  export INTERSYNTH_VLOG="$InterSynthVlog"
+  export RECONF_BASE="$ReconfBase"
+  export CELLLIB_FILE="$CellLibFile"
+  export INTERCONNECT_ILANG="$InterconnectILang"
+  export INTERCONNECT_VLOG="$InterconnectVLog"
+
+  echo "Synthesizing InterSynth results."
+  echo "  Script:               $Script"
+  echo "  InterSynth Result:    $InterSynthVlog"
+  echo "  Interconnect ILang:   $InterconnectILang"
+  echo "  Interconnect Verilog: $InterconnectVLog"
+  echo "  Log:                  $LogFile"
+  echo "This may take a while..."
+  $YOSYS -q -l "$LogFile" -c "$Script"
+  if [ $? -ne 0 ] ; then
+    echo "Error running yosys. See its logfile $LogFile."
+    exit 1
+  fi
+  # print statistics by ABC (extract everything from "print_gates" to the next empty line)
+  echo ""
+  echo "ABC optimization results (see area and delay):"
+  echo ""
+  sed -n '/^ABC: + print_gates/,/^$/p' "$LogFile"
+  echo ""
+}
+
+##############################################################################
+# Check results of InterSynth
+#
+function CheckIntersynthPostSi {
+  # $ChipBase is already set by the caller
+  FindCurrentApp  # will exit if not inside an app directory
+
+  # setup
+  App="$CurrentApp"
+  AppLC="${App,,}"   # convert to lower case
+  AppBase="$ChipBase/apps/$AppLC"
+  RelAppBase=".../${AppBase##$ChipBase/}"
+  OutDir="$AppBase/chll/out"
+
+  ReconfBase="$ChipBase/units/reconfmodule"
+  CellLibBase="$ChipBase/celllib"
+  CellLibFile="$ReconfBase/chll/out/celllib.il"
+  CellLibMaps="$ReconfBase/chll/out/celllib-maps.il"
+  InterSynthFile="$OutDir/intersynth.txt"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+
+  Script="$AppBase/chll/scripts/check-intersynth-postsi.tcl"
+  LogFile="$AppBase/chll/log/check-intersynth-postsi.log"
+  
+  # set environment variables used by TCL script
+  export CHIP_BASE="$ChipBase"
+  export APP_NAME="$App"
+  export APP_NAME_LC="$AppLC"
+  export APP_ILANG_OUT="$ILangFile"
+  export APP_OUT_DIR="$OutDir"
+  export APP_BASE="$AppBase"
+  export CELLLIB_BASE="$CellLibBase"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Creating InterSynth files."
+  echo "  Script:            $Script"
+  echo "  Cell Library:      $CellLibFile"
+  echo "  Cell Lib Maps:     $CellLibMaps"
+  echo "  InterSynth Script: $InterSynthFile"
+  echo "  Log:               $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+}
+
+##############################################################################
+# Generate the Reconf.Module and associated files
+#
+function GenerateReconfModule {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  # must be executed from reconfmodule unit
+  FindCurrentUnit
+  if [ "$CurrentUnit" != "ReconfModule" ] ; then
+    echo "Error: This must be executed from the ReconfModule unit directory."
+    exit 1
+  fi
+
+  Unit="$CurrentUnit"
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+  AppsBase="$ChipBase/apps"
+  CellLibBase="$ChipBase/celllib"
+  UnitOutBase="$UnitBase/chll/out"
+
+  # setup
+  Script="$UnitBase/chll/scripts/generate-reconf-module.tcl"
+  LogFile="$UnitBase/chll/log/generate-reconf-module.log"
+  CellLibFile="$ReconfBase/chll/out/celllib.il"
+  CellLibMaps="$ReconfBase/chll/out/celllib-maps.il"
+  InterSynthFile="$ReconfBase/chll/out/intersynth.txt"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+  
+  # set environment variables used by TCL script
+  export CHIP_BASE="$ChipBase"
+  export RECONF_BASE="$ReconfBase"
+  export APPS_BASE="$AppsBase"
+  export CELLLIB_BASE="$CellLibBase"
+  export CELLLIB_FILE="$CellLibFile"
+  export CELLLIB_MAPS="$CellLibMaps"
+  export INTERSYNTH_FILE="$InterSynthFile"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Checking InterSynth results."
+  echo "  Script:            $Script"
+  echo "  Cell Library:      $CellLibFile"
+  echo "  Cell Lib Maps:     $CellLibMaps"
+  echo "  InterSynth Script: $InterSynthFile"
+  echo "  Log:               $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+  echo ""
+}
+
+##############################################################################
+# Check that everything is up-to-date and then commit this as a Pre-Si. version
+#
+function CommitPreSi {
+  FindChipBase
+  if [ $# -ne 0 ] ; then
+    echo "Error: No parameters allowed"
+    exit 1
+  fi
+  # check that this is executed from the chip base directory
+  if [ "$(pwd)" != "$ChipBase" ] ; then
+    echo "Error: This is only possible from the chip base directory."
+    exit 1
+  fi
+  #### Check that the Reconf.Module is Up-to-Date ############################
+  Errors=0
+  # check that a Makefile exists
+  if [ ! -s "$ChipBase/Makefile" ] ; then
+    echo "Error: Missing Makefile"
+    exit 1
+  fi
+  # there is no (suitable) way to check whether the Makefile is up to date
+  echo "Be sure that the Makefile is up to date!"
+  # check that the reconfigurable module is up to date
+  cd "$ChipBase"   # although pwd is $ChipBase already
+  make --question all   # just returns an exit status that is zero if up to date, nonzero otherwise
+  if [ $? -ne 0 ] ; then
+    echo "Error: \"make\" doesn't think that the reconfigurable module is up to date"
+    Errors=$(( $Errors + 1 ))
+  fi
+  # check that all targets of the Makefile are versioned by SVN
+  grep "/chll/out/" "$ChipBase/targets.txt" | xargs svn st | grep -q '^\?' 
+  if [ $? -ne 1 ] ; then
+    echo "Error: Some of the target files are not versioned by SVN"
+    Errors=$(( $Errors + 1 ))
+  fi
+  # check that the whole chip is commited to SVN (i.e. no changes in working copy)
+  svn st -q "$ChipBase" | grep -q .
+  if [ $? -ne 1 ] ; then
+    echo "Error: There are non-committed changes in the working copy at $ChipBase"
+    Errors=$(( $Errors + 1 ))
+  fi
+  #### Check that all Tools are Up-to-date ###################################
+  # check myself
+  svn st "$0" | grep -q .
+  if [ $? -ne 1 ] ; then
+    echo "Error: FlowCmd script $0 has changes in the working copy"
+    Errors=$(( $Errors + 1 ))
+  fi
+  # check flowproc
+  FlowProcDir="$(dirname "$FLOWPROC")"
+  cd "$FlowProcDir"
+  make --question all   # just returns an exit status that is zero if up to date, nonzero otherwise
+  if [ $? -ne 0 ] ; then
+    echo "Error: $FLOWPROC is not up to date"
+    Errors=$(( $Errors + 1 ))
+  fi
+  svn st -q "$FlowProcDir" | grep -q .
+  if [ $? -ne 1 ] ; then
+    echo "Error: Sources of $FLOWPROC have non-committed changes in the working copy"
+    Errors=$(( $Errors + 1 ))
+  fi
+  # check trfsmgen
+  TrfsmGenDir="$(dirname "$TRFSMGEN")"
+  cd "$TrfsmGenDir"
+  make --question all   # just returns an exit status that is zero if up to date, nonzero otherwise
+  if [ $? -ne 0 ] ; then
+    echo "Error: $TRFSMGEN is not up to date"
+    Errors=$(( $Errors + 1 ))
+  fi
+  svn st -q "$TrfsmGenDir" | grep -q .
+  if [ $? -ne 1 ] ; then
+    echo "Error: Sources of $TRFSMGEN have non-committed changes in the working copy"
+    Errors=$(( $Errors + 1 ))
+  fi
+  # check Yosys
+  YosysDir="$(dirname "$YOSYS")"
+  cd $YosysDir
+  make --question all   # just returns an exit status that is zero if up to date, nonzero otherwise
+  if [ $? -ne 0 ] ; then
+    echo "Error: $YOSYS is not up to date"
+    Errors=$(( $Errors + 1 ))
+  fi
+  git status --porcelain --untracked-files=no | grep . -q
+  if [ $? -ne 1 ] ; then
+    echo "Error: Sources of $YOSYS have non-committed changes in the working copy"
+    Errors=$(( $Errors + 1 ))
+  fi
+  # check InterSynth
+  InterSynthDir="$(dirname "$INTERSYNTH")"
+  cd $InterSynthDir
+  make --question all   # just returns an exit status that is zero if up to date, nonzero otherwise
+  if [ $? -ne 0 ] ; then
+    echo "Error: $INTERSYNTH is not up to date"
+    Errors=$(( $Errors + 1 ))
+  fi
+  svn st -q "$InterSynthDir" | grep -q .
+  if [ $? -ne 1 ] ; then
+    echo "Error: Sources of $INTERSYNTH have non-committed changes in the working copy"
+    Errors=$(( $Errors + 1 ))
+  fi
+  #### Stop if there were Errors #############################################
+  if [ $Errors -gt 0 ] ; then
+    echo "There were $Errors errors which prevent committing the pre-silicon results."
+    exit 1
+  fi
+  #### Ask user if he is sure ################################################
+  echo ""
+  echo "#### Do you really want to commit these pre-silicon results?"
+  read -p "  Please type 'Yes, I do!': " 
+  if [ $? -ne 0 -o "$REPLY" != "Yes, I do!" ] ; then
+    echo ""
+    echo "Ok, not committing the pre-silicon results."
+    exit 1
+  fi
+  #### Determine SVN/GIT Revisions ###########################################
+  cd "$ChipBase"
+  RevFlowCmd=$(LANG=C svn info $0 | sed -rn '/Revision:/s/.*: //p')
+  RevFlowProc=$(LANG=C svn info $FlowProcDir | sed -rn '/Revision:/s/.*: //p')
+  RevTrfsmGen=$(LANG=C svn info $TrfsmGenDir | sed -rn '/Revision:/s/.*: //p')
+  RevYosys=$(cd $YosysDir && git rev-parse HEAD)
+  RevInterSynth=$(LANG=C svn info $InterSynthDir | sed -rn '/Revision:/s/.*: //p')
+  # save revisions to "Post-Si" flag file and also print to screen
+  echo ""
+  echo "Committing Pre-Silicon Results with tools versions:"
+  (
+    echo "flowcmd: $RevFlowCmd"
+    echo "flowproc: $RevFlowProc"
+    echo "trfsmgen: $RevTrfsmGen"
+    echo "yosys: $RevYosys"
+    echo "intersynth: $RevInterSynth"
+  ) | tee "$ChipBase/.chll-postsi"
+  # commit this as an SVN revision
+  echo "TODO: activate the following SVN commands in this script $0:"
+  svn --force add "$ChipBase/.chll-postsi"    # use "--force" to avoid complaints about already added file
+  svn commit -m "Commit Pre-Silicon Results" "$ChipBase/.chll-postsi"
+  # inform user
+  echo ""
+  RevPreSi=$(LANG=C svn info "$ChipBase/.chll-postsi" | sed -rn '/Revision:/s/.*: //p')
+  echo "Commited as SVN revision $RevPreSi"
+}
+
+##############################################################################
+# Generate a module which directly instantiates all (Ex.)Apps. with MUXes
+#
+function GenerateMuxedModule {
+  FindChipBase
+  if [ $# -gt 1 ] ; then
+    echo "Error: $0 generate-muxed-module"
+    exit 1
+  fi
+
+  # must be executed from reconfmodule unit
+  FindCurrentUnit
+  if [ "$CurrentUnit" != "ReconfModule" ] ; then
+    echo "Error: This must be executed from the ReconfModule unit directory."
+    exit 1
+  fi
+
+  Unit="$CurrentUnit"
+  UnitLC="${Unit,,}"   # convert to lower case
+  UnitBase="$ChipBase/units/$UnitLC"
+  RelUnitBase=".../${UnitBase##$ChipBase/}"
+  ReconfBase="$ChipBase/units/reconfmodule"
+  AppsBase="$ChipBase/apps"
+  CellLibBase="$ChipBase/celllib"
+  UnitOutBase="$UnitBase/chll/out"
+
+  # setup
+  Script="$UnitBase/chll/scripts/generate-muxed-module.tcl"
+  LogFile="$UnitBase/chll/log/generate-muxed-module.log"
+  CellLibFile="$ReconfBase/chll/out/celllib.il"
+  CellLibMaps="$ReconfBase/chll/out/celllib-maps.il"
+  InterSynthFile="$ReconfBase/chll/out/intersynth.txt"
+  # used by setup-reconf-module.tcl:
+  StubFile="$ReconfBase/chll/out/parent-stubnets.txt"
+  ParentILang="$ReconfBase/chll/out/parent.il"
+  
+  # set environment variables used by TCL script
+  export RECONF_BASE="$ReconfBase"
+  export APPS_BASE="$AppsBase"
+  export CELLLIB_BASE="$CellLibBase"
+  export CELLLIB_FILE="$CellLibFile"
+  export CELLLIB_MAPS="$CellLibMaps"
+  export INTERSYNTH_FILE="$InterSynthFile"
+  # used by setup-reconf-module.tcl
+  export UNIT_BASE="$ReconfBase"
+  export STUB_FILE="$StubFile"
+  export PARENT_ILANG="$ParentILang"
+  export RECONF_BASE="$ReconfBase"
+  # run
+  echo "Creating InterSynth files."
+  echo "  Script:            $Script"
+  echo "  Cell Library:      $CellLibFile"
+  echo "  Cell Lib Maps:     $CellLibMaps"
+  echo "  InterSynth Script: $InterSynthFile"
+  echo "  Log:               $LogFile"
+  $FLOWPROC -b -f "$Script" 2>&1 | tee $LogFile
+  #gdb $FLOWPROC
+  if [ ${PIPESTATUS[0]} -ne 0 ] ; then
+    echo "Error running flowproc. See its logfile $LogFile."
+    exit 1
+  fi
+
+}
+
+##############################################################################
+## Main Program ##############################################################
+##############################################################################
+
+while [ $# -gt 0 ] ; do
+  Command="$1"
+  shift
+  case "$Command" in
+    -b)
+      if [ $# -lt 1 ] ; then
+        echo "Error: Option -b requires an argument"
+        exit 1
+      fi
+      ChipBase="$1"
+      shift
+      ;;
+    --override-post-si)
+      if [ $# -lt 1 ] ; then
+        echo "Error: Option --override-post-si requires an argument"
+        exit 1
+      fi
+      PostSiOverride="$1"
+      shift
+      ;;
+    new-chip)
+      CreateNewChip "$@"
+      exit
+      ;;
+    new-unit)
+      CreateNewUnit "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    import-unit)
+      ImportNewUnit "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    new-reconf-module)
+      CheckPostSiOverride
+      NewReconfModule "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    characterize-parent)
+      CheckPostSiOverride
+      CharacterizeParent "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    list-reconf-signals)
+      CheckPostSiOverride   # although this does not (yet) add or change any files
+      ListReconfSignals "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    check-reconf-module)
+      CheckPostSiOverride
+      CheckReconfModule "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    new-app)
+      # enabled in Post-Si phase
+      CreateNewApp "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    app-templates)
+      IsExApp && CheckPostSiOverride   # only allowed for Apps. which are no Ex.Apps.
+      CreateAppTemplates "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    check-app)
+      IsExApp && CheckPostSiOverride   # only allowed for Apps. which are no Ex.Apps.
+      CheckApp "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    extract-fsm)
+      IsExApp && CheckPostSiOverride   # only allowed for Apps. which are no Ex.Apps.
+      ExtractFSM "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    insert-trfsm)
+      IsExApp && CheckPostSiOverride   # only allowed for Apps. which are no Ex.Apps.
+      InsertTRFSM "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    new-cell)
+      CheckPostSiOverride
+      CreateNewCell "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    cell-templates)
+      CheckPostSiOverride
+      CreateCellTemplates "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    check-cell)
+      CheckPostSiOverride
+      CheckCell "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    check-celllib)
+      CheckPostSiOverride
+      CheckCellLib "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    extract)
+      IsExApp && CheckPostSiOverride   # only allowed for Apps. which are no Ex.Apps.
+      Extract "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    check-extract)
+      IsExApp && CheckPostSiOverride   # only allowed for Apps. which are no Ex.Apps., although this does not (yet) add or change any files
+      CheckExtract "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    check-exapps)
+      CheckPostSiOverride   # although this does not (yet) add or change any files
+      CheckExApps "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    insert-trfsms)
+      CheckPostSiOverride
+      InsertTRFSMs "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    intersynth)
+      [ "$1" == "-post-si" ] || CheckPostSiOverride
+      Intersynth "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    check-intersynth)
+      [ "$1" == "-post-si" ] || CheckPostSiOverride
+      CheckIntersynth "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    generate-reconf-module)
+      CheckPostSiOverride
+      GenerateReconfModule "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    commit-pre-si)
+      CheckPostSiOverride
+      CommitPreSi "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    generated-muxed-module)
+      GenerateMuxedModule "$@"
+      # the function can't "shift" this outer $@ :-(, therefore exit
+      exit
+      ;;
+    *)
+      echo "Error: Invalid command \"$Command\"."
+      exit 1
+      ;;
+  esac
+done
+

@@ -1,0 +1,25 @@
+
+21. Printing statistics.
+
+=== MyInterSynthModule ===
+
+   Number of wires:              15558
+   Number of wire bits:          18533
+   Number of public wires:         479
+   Number of public wire bits:    3454
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:              15630
+     CLKIN0                       2514
+     IMUX20                       1078
+     IMUX30                        182
+     MUX21                         210
+     MUX31                          49
+     NAND20                       6975
+     NAND30                       1377
+     NAND40                        800
+     NOR20                        2221
+     NOR30                         223
+     XOR20                           1
+

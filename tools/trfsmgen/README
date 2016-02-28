@@ -1,0 +1,170 @@
+trfsmgen(1tr) -- Generate configuration bitstream for TR-FSMs
+=============================================================
+
+## SYNOPSYS
+
+`trfsmgen` [`-h`|`--help`] [`-b`] [`-f` <filename>] [`-c` <string>] [`-n`] [`-s`]
+
+## DESCRIPTION
+
+`trfsmgen` is a command line tool to generate the configuration bitstream for
+TR-FSM.
+
+## USER INTERFACE
+
+`trfsmgen` offers a convenient _command line_ interface. It uses _Tcl_ as
+scripting language and command interpreter. Actually, every command you enter
+is implemented as a Tcl command (but written in Pascal and compiled in the
+executable). The Tcl programming language offers unlimited options to use,
+customize and automate `trfsmgen`.
+
+`trfsmgen` prints a prompt at the screen to ask the use to enter commands. To
+wait for the user input, _GNU Readline_ is used. This offers comforable command
+line editing, history and auto-completion.
+
+For each Tcl command a dedicated `man`(1tr)ual page is provided. The
+sub-extension `tr` is used. These are viewed with the built-in command `man`
+from the `trfsmgen` command line.
+
+To quit `trfsmgen` use `exit`(1tr) or type [Ctrl]-[D].
+
+## OPTIONS
+
+  * `-h`, `--help`:
+    Print a usage information and exit.
+
+  * `-b`:
+    Batch mode. `trfsmgen` will not wait for user input but quit directly after
+    the startup scripts, the scripts given with `-f` parameters and the commands
+    given with `-c` parameters were executed.
+
+  * `-f` <filename>:
+    Execute the Tcl script in _filename_ at program start.
+
+  * `-c` <string>:
+    Execute the commands given in _string_.
+
+  * `-n`:
+    Do not execute the start scripts (/etc/trfsmgen/... TODO )
+
+  * `-s`:
+    Do not perform (slow) symbol lookup in stack trace)
+
+## STARTUP SCRIPTS
+
+`trfsmgen` searches and executes startup scripts at program start, which are
+_/etc/trfsmgen/trfsmgenrc_, _/etc/trfsmgen/trfsmgen.d/*.tcl_ (in alphabetical
+order) and _~/trfsmgenrc_ in that order. If the option `-n` is given, none of
+these startup scripts are executed.
+
+Next, if the option `-f` _filename_ is given, the Tcl script _filename_ is
+executed. The Tcl commands supplied with the option `-c` _string_ are also
+executed. These scripts and commands are executed in the order of the options
+on command line.
+
+Finally, the user is prompted to input his commands, unless the option `-b`
+is given, which immediately quits the program after all scripts and commands
+are executed.
+
+## PRINCIPLE
+
+The process is split into two independent parts. The first part is to specify
+the behavior of the FSM using an _FSM definition object_. Secondly, a
+_TR-FSM object_ is created. The FSM definition object is assigned to the
+TR-FSM object, and finally the bitstream is generated.
+
+## COMMANDS
+
+     help [word]
+     man [page]
+     history
+     exit
+     create_fsm_definition name
+     add_input fsmdef name
+     add_output fsmdef name
+     add_state fsmdef name
+     add_transition fsmdef from to output input value input value ...
+     set_outputs_registered fsmdef true|false
+     get_name fsmdef
+     get_input_count fsmdef
+     get_output_count fsmdef
+     get_state_count fsmdef
+     get_transition_count fsmdef
+     get_reset_state fsmdef
+     read_kiss filename
+     read_ilang filename module
+     find_cells [-one] [-name] module -cell cell|-instance instance
+     get_cell_name cell
+     get_fsm cell
+     rename_fsm fsmdef name
+     rename_input fsmdef input name
+     rename_output fsmdef output name
+     rename_state fsmdef state name
+     check_fsm fsmdef
+     print_fsm fsmdef
+     print_fsms multifsmdefs
+     write_fsm fsmdef -format vhdl|verilog|ilang filename
+     create_trfsm [-version version] in out state n0 n1 n2 ...
+     print_trfsm trfsm|multitrfsm
+     map_fsms trfsms fsms arrayname
+     set_fsm_definition trfsm fsmdef
+     map_input trfsm logical physical
+     map_output trfsm logical physical
+     create_trfsm_wrapper trfsm cellname
+     insert_trfsm_wrapper cell fsmdef wrapper instname
+     generate_bitstream trfsm
+     print_bitstream bitstream [-trfsm]
+     write_bitstream bitstream -format vhdl|verilog|c|text|modelsim|lec|formality [options] prefix filename
+     write_encoding trfsm -format lec [options] filename
+     write_module module -format vhdl|verilog|ilang filename
+     write_trfsm_wrapper wrapper -format vhdl|verilog|ilang|flowtcl filename
+
+## FILES
+
+  * _/etc/trfsmgen/trfsmgenrc_:
+    System-wide startup script
+
+  * _/etc/trfsmgen/trfsmgenrc.d/*.tcl_:
+    Base directory for more system-wide startup scripts
+
+  * _~/.trfsmgenrc_:
+    Personal startup script
+
+  * _~/.trfsmgen_history_:
+    stores the history of the commands entered at the prompt
+
+## TODO
+
+ - implement the commands rename_*
+ - `read_kiss` man page: document input/output signal order
+ - add a command to verify a TR-FSM with its FSM definition
+
+## REFERENCES
+
+`trfsmgen` uses the [GNU
+Readline](http://cnswww.cns.cwru.edu/php/chet/readline/rltop.html) library with
+[Pascal bindings and an object-oriented
+wrapper](https://github.com/hansiglaser/pas-readline/).
+
+[Tcl (Tool Command Language)](http://www.tcl.tk/) is also used with [Pascal
+bindings and an object-oriented
+wrapper](https://github.com/hansiglaser/pas-tcl/).
+
+## BUILD INSTRUCTIONS
+
+You need the FreePascal compiler <http://www.freepascal.org/> and GNU Make. To
+build the man pages, you need "ronn" <https://github.com/rtomayko/ronn>
+(Debian package "ruby-ronn").
+
+    # make
+    # ./trfsmgen
+
+## SEE ALSO
+
+help(1tr), man(1tr)
+
+## AUTHOR
+
+Johann Glaser <Johann.Glaser@gmx.at>
+
+

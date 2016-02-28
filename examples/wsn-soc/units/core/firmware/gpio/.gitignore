@@ -1,0 +1,6 @@
+*.do
+*.elf
+*.lst
+*.hex
+openmsp430-verifymem*.mem
+

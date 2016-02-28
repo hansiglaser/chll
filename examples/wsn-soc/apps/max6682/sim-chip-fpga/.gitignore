@@ -1,0 +1,12 @@
+work
+unisim
+Makefile
+modelsim.ini
+vsim.wlf
+transcript
+vsim.dbg
+vsim.do
+firmware-?sb.do
+xilinx-cells.txt
+compiled.*
+

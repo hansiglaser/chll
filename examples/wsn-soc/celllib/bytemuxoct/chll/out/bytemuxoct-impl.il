@@ -1,0 +1,149 @@
+
+attribute \src "../../verilog/bytemuxoct.v:1"
+module \ByteMuxOct
+
+  attribute \src "../../verilog/bytemuxoct.v:36"
+  wire width 8 \AB
+
+  attribute \src "../../verilog/bytemuxoct.v:37"
+  wire width 8 \ABC
+
+  attribute \src "../../verilog/bytemuxoct.v:38"
+  wire width 8 \ABCD
+
+  attribute \src "../../verilog/bytemuxoct.v:39"
+  wire width 8 \ABCDE
+
+  attribute \src "../../verilog/bytemuxoct.v:40"
+  wire width 8 \ABCDEF
+
+  attribute \src "../../verilog/bytemuxoct.v:41"
+  wire width 8 \ABCDEFG
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/bytemuxoct.v:3"
+  wire width 8 input 1 \A_i
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/bytemuxoct.v:5"
+  wire width 8 input 2 \B_i
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/bytemuxoct.v:7"
+  wire width 8 input 3 \C_i
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/bytemuxoct.v:9"
+  wire width 8 input 4 \D_i
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/bytemuxoct.v:11"
+  wire width 8 input 5 \E_i
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/bytemuxoct.v:13"
+  wire width 8 input 6 \F_i
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/bytemuxoct.v:15"
+  wire width 8 input 7 \G_i
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/bytemuxoct.v:17"
+  wire width 8 input 8 \H_i
+
+  attribute \intersynth_conntype "Bit"
+  attribute \src "../../verilog/bytemuxoct.v:19"
+  wire input 9 \SAB_i
+
+  attribute \intersynth_conntype "Bit"
+  attribute \src "../../verilog/bytemuxoct.v:21"
+  wire input 10 \SC_i
+
+  attribute \intersynth_conntype "Bit"
+  attribute \src "../../verilog/bytemuxoct.v:23"
+  wire input 11 \SD_i
+
+  attribute \intersynth_conntype "Bit"
+  attribute \src "../../verilog/bytemuxoct.v:25"
+  wire input 12 \SE_i
+
+  attribute \intersynth_conntype "Bit"
+  attribute \src "../../verilog/bytemuxoct.v:27"
+  wire input 13 \SF_i
+
+  attribute \intersynth_conntype "Bit"
+  attribute \src "../../verilog/bytemuxoct.v:29"
+  wire input 14 \SG_i
+
+  attribute \intersynth_conntype "Bit"
+  attribute \src "../../verilog/bytemuxoct.v:31"
+  wire input 15 \SH_i
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/bytemuxoct.v:33"
+  wire width 8 output 16 \Y_o
+
+  attribute \src "../../verilog/bytemuxoct.v:36"
+  cell $mux $ternary$../../verilog/bytemuxoct.v:36$1
+    parameter \WIDTH 8
+    connect \A \A_i
+    connect \B \B_i
+    connect \S \SAB_i
+    connect \Y \AB
+  end
+
+  attribute \src "../../verilog/bytemuxoct.v:37"
+  cell $mux $ternary$../../verilog/bytemuxoct.v:37$2
+    parameter \WIDTH 8
+    connect \A \AB
+    connect \B \C_i
+    connect \S \SC_i
+    connect \Y \ABC
+  end
+
+  attribute \src "../../verilog/bytemuxoct.v:38"
+  cell $mux $ternary$../../verilog/bytemuxoct.v:38$3
+    parameter \WIDTH 8
+    connect \A \ABC
+    connect \B \D_i
+    connect \S \SD_i
+    connect \Y \ABCD
+  end
+
+  attribute \src "../../verilog/bytemuxoct.v:39"
+  cell $mux $ternary$../../verilog/bytemuxoct.v:39$4
+    parameter \WIDTH 8
+    connect \A \ABCD
+    connect \B \E_i
+    connect \S \SE_i
+    connect \Y \ABCDE
+  end
+
+  attribute \src "../../verilog/bytemuxoct.v:40"
+  cell $mux $ternary$../../verilog/bytemuxoct.v:40$5
+    parameter \WIDTH 8
+    connect \A \ABCDE
+    connect \B \F_i
+    connect \S \SF_i
+    connect \Y \ABCDEF
+  end
+
+  attribute \src "../../verilog/bytemuxoct.v:41"
+  cell $mux $ternary$../../verilog/bytemuxoct.v:41$6
+    parameter \WIDTH 8
+    connect \A \ABCDEF
+    connect \B \G_i
+    connect \S \SG_i
+    connect \Y \ABCDEFG
+  end
+
+  attribute \src "../../verilog/bytemuxoct.v:42"
+  cell $mux $ternary$../../verilog/bytemuxoct.v:42$7
+    parameter \WIDTH 8
+    connect \A \ABCDEFG
+    connect \B \H_i
+    connect \S \SH_i
+    connect \Y \Y_o
+  end
+end

@@ -1,0 +1,57 @@
+\documentclass[landscape]{article}
+\usepackage[a3paper,margin=1.5cm]{geometry}
+\usepackage{tikz}
+\usetikzlibrary{external}
+% If your pictures are too big, enable externalization and use the
+% individual files. Don't forget to execute "pdflatex" with the
+% "-shell-escape" flag.
+%\tikzexternalize[
+%  prefix=presilicon-trees/
+%]
+%
+% If you want the images scaled to the page width, enclose the
+% \begin{tikzpicture} ... \end{tikzpicture} with
+%   \resizebox{\textwidth}{!}{% ... }
+%
+\begin{document}
+
+% make '_' no longer have a special meaning
+\catcode`\_=12
+
+\section{ADT7310: Word[0]}
+\tikzsetnextfilename{presilicon-tree-adt7310-Word-0}
+\begin{tikzpicture}
+\input{presilicon-tree-adt7310-Word-0.tex}
+\end{tikzpicture}
+
+\section{ADT7310: Word[1]}
+\tikzsetnextfilename{presilicon-tree-adt7310-Word-1}
+\begin{tikzpicture}
+\input{presilicon-tree-adt7310-Word-1.tex}
+\end{tikzpicture}
+
+\section{ADT7310: Byte[0]}
+\tikzsetnextfilename{presilicon-tree-adt7310-Byte-0}
+\begin{tikzpicture}
+\input{presilicon-tree-adt7310-Byte-0.tex}
+\end{tikzpicture}
+
+\section{ADT7310: Byte[1]}
+\tikzsetnextfilename{presilicon-tree-adt7310-Byte-1}
+\begin{tikzpicture}
+\input{presilicon-tree-adt7310-Byte-1.tex}
+\end{tikzpicture}
+
+\section{ADT7310: Bit[0]}
+\tikzsetnextfilename{presilicon-tree-adt7310-Bit-0}
+\begin{tikzpicture}
+\input{presilicon-tree-adt7310-Bit-0.tex}
+\end{tikzpicture}
+
+\section{ADT7310: Bit[1]}
+\tikzsetnextfilename{presilicon-tree-adt7310-Bit-1}
+\begin{tikzpicture}
+\input{presilicon-tree-adt7310-Bit-1.tex}
+\end{tikzpicture}
+
+\end{document}

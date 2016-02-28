@@ -1,0 +1,17 @@
+.fromstates I2CFSM_1/I2C_FSM_State_reg[3] I2CFSM_1/I2C_FSM_State_reg[2] I2CFSM_1/I2C_FSM_State_reg[1] I2CFSM_1/I2C_FSM_State_reg[0]
+.tostates State_o_reg[4] State_o_reg[3] State_o_reg[2] State_o_reg[1] State_o_reg[0]
+.begin
+0000 00000
+1000 00001
+0100 00010
+1100 00011
+0010 00100
+1010 00101
+0110 00110
+0001 00111
+1001 01000
+0101 01001
+0011 01010
+1011 01011
+0111 01100
+.end

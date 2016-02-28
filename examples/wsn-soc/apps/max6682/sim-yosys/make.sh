@@ -1,0 +1,1 @@
+../sim-rtl/make.sh

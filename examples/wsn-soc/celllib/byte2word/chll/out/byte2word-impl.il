@@ -1,0 +1,33 @@
+
+attribute \src "../../verilog/byte2word.v:1"
+module \Byte2Word
+
+  wire width 16 $auto$splice.cc:141:get_spliced_signal$2
+
+  attribute \intersynth_conntype "Word"
+  attribute \src "../../verilog/byte2word.v:7"
+  wire width 16 $auto$splice.cc:237:run$3
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/byte2word.v:3"
+  wire width 8 input 1 \H_i
+
+  attribute \intersynth_conntype "Byte"
+  attribute \src "../../verilog/byte2word.v:5"
+  wire width 8 input 2 \L_i
+
+  attribute \intersynth_conntype "Word"
+  attribute \src "../../verilog/byte2word.v:7"
+  wire width 16 output 3 \Y_o
+
+  cell $concat $auto$splice.cc:135:get_spliced_signal$1
+    parameter \A_WIDTH 8
+    parameter \B_WIDTH 8
+    connect \A \L_i
+    connect \B \H_i
+    connect \Y $auto$splice.cc:141:get_spliced_signal$2
+  end
+
+  connect $auto$splice.cc:237:run$3 { \H_i \L_i }
+  connect \Y_o $auto$splice.cc:141:get_spliced_signal$2
+end

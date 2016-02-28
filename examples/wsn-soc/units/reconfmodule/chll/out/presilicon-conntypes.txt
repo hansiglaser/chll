@@ -1,0 +1,4 @@
+### Connection Types
+conntype Bit 1 2 1
+conntype Byte 8 2 8
+conntype Word 16 2 16

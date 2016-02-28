@@ -1,0 +1,17 @@
+*.ico
+*.res
+lib
+backup
+flowproc
+man
+*.ppu
+*.lps
+testnetlist
+ilang-lex.pas
+ilang-parser.pas
+testilang
+liberty-token.pas
+liberty-parser.pas
+testliberty
+.*.swp
+

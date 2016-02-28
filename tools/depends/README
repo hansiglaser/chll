@@ -1,0 +1,23 @@
+##############################################################################
+### ATTENTION: THESE ARE A HIGHLY EXPERIMENTAL SCRIPTS #######################
+##############################################################################
+
+Determine dependencies from the design flow and generate a Makefile.
+
+This set of scripts automatically determines the dependencies of all files
+in the design flow and generates a Makefile.
+
+Usage:
+ 1) cd to the base chip directory of the design
+ 2) execute depends-trace.sh
+ 3) execute depends-eval.sh
+
+depends-trace.sh executes *most* steps of the design flow for all example
+applications and all cells as well as for the generation of the
+reconfigurable module. All file accesses are traced with "strace".
+
+depends-eval.sh evaluates the traces and generates a (large) Makefile.
+
+##############################################################################
+### ATTENTION: THESE ARE A HIGHLY EXPERIMENTAL SCRIPTS #######################
+##############################################################################

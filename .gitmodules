@@ -1,0 +1,6 @@
+[submodule "tools/common/pas-tcl"]
+	path = tools/common/pas-tcl
+	url = https://github.com/hansiglaser/pas-tcl.git
+[submodule "tools/common/pas-readline"]
+	path = tools/common/pas-readline
+	url = https://github.com/hansiglaser/pas-readline.git

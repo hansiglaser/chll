@@ -1,0 +1,193 @@
+conntype Bit 1 2 1.000
+conntype Byte 8 2 8.000
+conntype Word 16 2 16.000
+celltype !CellInAdcConvComplete_i Bit *PORT
+celltype !CellOutAdcDoConvert_o Bit PORT
+celltype !CellInAdcValue_i Word *PORT
+celltype !CellInI2C_Busy_i Bit *PORT
+celltype !CellOutI2C_DataIn_o Byte PORT
+celltype !CellInI2C_DataOut_i Byte *PORT
+celltype !CellInI2C_Error_i Bit *PORT
+celltype !CellInI2C_FIFOEmpty_i Bit *PORT
+celltype !CellInI2C_FIFOFull_i Bit *PORT
+celltype !CellOutI2C_FIFOReadNext_o Bit PORT
+celltype !CellOutI2C_FIFOWrite_o Bit PORT
+celltype !CellOutI2C_ReadCount_o Byte PORT
+celltype !CellOutI2C_ReceiveSend_n_o Bit PORT
+celltype !CellOutI2C_StartProcess_o Bit PORT
+celltype !CellInInputs_i_0 Bit *PORT
+celltype !CellInInputs_i_1 Bit *PORT
+celltype !CellInInputs_i_2 Bit *PORT
+celltype !CellInInputs_i_3 Bit *PORT
+celltype !CellInInputs_i_4 Bit *PORT
+celltype !CellInInputs_i_5 Bit *PORT
+celltype !CellInInputs_i_6 Bit *PORT
+celltype !CellInInputs_i_7 Bit *PORT
+celltype !CellOutOutputs_o_0 Bit PORT
+celltype !CellOutOutputs_o_1 Bit PORT
+celltype !CellOutOutputs_o_2 Bit PORT
+celltype !CellOutOutputs_o_3 Bit PORT
+celltype !CellOutOutputs_o_4 Bit PORT
+celltype !CellOutOutputs_o_5 Bit PORT
+celltype !CellOutOutputs_o_6 Bit PORT
+celltype !CellOutOutputs_o_7 Bit PORT
+celltype !CellOutReconfModuleIRQs_o_0 Bit PORT
+celltype !CellOutReconfModuleIRQs_o_1 Bit PORT
+celltype !CellOutReconfModuleIRQs_o_2 Bit PORT
+celltype !CellOutReconfModuleIRQs_o_3 Bit PORT
+celltype !CellOutReconfModuleIRQs_o_4 Bit PORT
+celltype !CellOutSPI_CPHA_o Bit PORT
+celltype !CellOutSPI_CPOL_o Bit PORT
+celltype !CellOutSPI_DataIn_o Byte PORT
+celltype !CellInSPI_DataOut_i Byte *PORT
+celltype !CellInSPI_FIFOEmpty_i Bit *PORT
+celltype !CellInSPI_FIFOFull_i Bit *PORT
+celltype !CellOutSPI_LSBFE_o Bit PORT
+celltype !CellOutSPI_ReadNext_o Bit PORT
+celltype !CellInSPI_Transmission_i Bit *PORT
+celltype !CellOutSPI_Write_o Bit PORT
+celltype !CellInReconfModuleIn_i_0 Bit *PORT
+celltype !CellInReconfModuleIn_i_1 Bit *PORT
+celltype !CellInReconfModuleIn_i_2 Bit *PORT
+celltype !CellInReconfModuleIn_i_3 Bit *PORT
+celltype !CellInReconfModuleIn_i_4 Bit *PORT
+celltype !CellInReconfModuleIn_i_5 Bit *PORT
+celltype !CellInReconfModuleIn_i_6 Bit *PORT
+celltype !CellInReconfModuleIn_i_7 Bit *PORT
+celltype !CellOutReconfModuleOut_o_0 Bit PORT
+celltype !CellOutReconfModuleOut_o_1 Bit PORT
+celltype !CellOutReconfModuleOut_o_2 Bit PORT
+celltype !CellOutReconfModuleOut_o_3 Bit PORT
+celltype !CellOutReconfModuleOut_o_4 Bit PORT
+celltype !CellOutReconfModuleOut_o_5 Bit PORT
+celltype !CellOutReconfModuleOut_o_6 Bit PORT
+celltype !CellOutReconfModuleOut_o_7 Bit PORT
+celltype Counter Bit ResetSig_i Bit Preset_i Bit Enable_i Bit Direction_i Word PresetVal_i Word *D_o Bit *Overflow_o Bit *Zero_o
+celltype Counter32 Bit ResetSig_i Bit Preset_i Bit Enable_i Bit Direction_i Word PresetValH_i Word PresetValL_i Word *DH_o Word *DL_o Bit *Overflow_o Bit *Zero_o
+celltype AbsDiff Word A_i Word B_i Word *D_o
+celltype WordRegister Word D_i Word *Q_o Bit Enable_i
+celltype ByteRegister Byte D_i Byte *Q_o Bit Enable_i
+celltype AddSubCmp Bit AddOrSub_i Word A_i Word B_i Word *D_o Bit Carry_i Bit *Carry_o Bit *Zero_o Bit *Sign_o Bit *Overflow_o
+celltype ByteMuxOct Byte A_i Byte B_i Byte C_i Byte D_i Byte E_i Byte F_i Byte G_i Byte H_i Bit SAB_i Bit SC_i Bit SD_i Bit SE_i Bit SF_i Bit SG_i Bit SH_i Byte *Y_o
+celltype ByteMuxQuad Byte A_i Byte B_i Byte C_i Byte D_i Bit SAB_i Bit SC_i Bit SD_i Byte *Y_o
+celltype ByteMuxDual Byte A_i Byte B_i Bit S_i Byte *Y_o
+celltype Byte2Word Byte H_i Byte L_i Word *Y_o
+celltype Byte2WordSel Byte H_i Byte L_i Word *Y_o cfg:4 Shift_i cfg:4 Mask_i
+celltype WordMuxDual Word A_i Word B_i Bit S_i Word *Y_o
+celltype TRFSM0 Bit In0_i Bit In1_i Bit In2_i Bit In3_i Bit In4_i Bit In5_i Bit *Out0_o Bit *Out1_o Bit *Out2_o Bit *Out3_o Bit *Out4_o Bit *Out5_o Bit *Out6_o Bit *Out7_o Bit *Out8_o Bit *Out9_o
+celltype TRFSM1 Bit In0_i Bit In1_i Bit In2_i Bit In3_i Bit In4_i Bit In5_i Bit In6_i Bit In7_i Bit In8_i Bit In9_i Bit *Out0_o Bit *Out1_o Bit *Out2_o Bit *Out3_o Bit *Out4_o Bit *Out5_o Bit *Out6_o Bit *Out7_o Bit *Out8_o Bit *Out9_o Bit *Out10_o Bit *Out11_o Bit *Out12_o Bit *Out13_o Bit *Out14_o
+celltype CONST_Bit Bit *Value_o cfg:1 CfgValue_i
+celltype CONST_Byte Byte *Value_o cfg:8 CfgValue_i
+celltype CONST_Word Word *Value_o cfg:16 CfgValue_i
+celltype !CellParamIn_Word Word *PORT
+celltype !CellParamOut_Word Word PORT
+input AdcConvComplete_i 1 CellInAdcConvComplete_i PORT
+output AdcDoConvert_o 1 CellOutAdcDoConvert_o PORT
+input AdcValue_i 16 CellInAdcValue_i PORT
+input I2C_Busy_i 1 CellInI2C_Busy_i PORT
+output I2C_DataIn_o 8 CellOutI2C_DataIn_o PORT
+input I2C_DataOut_i 8 CellInI2C_DataOut_i PORT
+input I2C_Error_i 1 CellInI2C_Error_i PORT
+input I2C_FIFOEmpty_i 1 CellInI2C_FIFOEmpty_i PORT
+input I2C_FIFOFull_i 1 CellInI2C_FIFOFull_i PORT
+output I2C_FIFOReadNext_o 1 CellOutI2C_FIFOReadNext_o PORT
+output I2C_FIFOWrite_o 1 CellOutI2C_FIFOWrite_o PORT
+output I2C_ReadCount_o 8 CellOutI2C_ReadCount_o PORT
+output I2C_ReceiveSend_n_o 1 CellOutI2C_ReceiveSend_n_o PORT
+output I2C_StartProcess_o 1 CellOutI2C_StartProcess_o PORT
+input Inputs_i_0 1 CellInInputs_i_0 PORT
+input Inputs_i_1 1 CellInInputs_i_1 PORT
+input Inputs_i_2 1 CellInInputs_i_2 PORT
+input Inputs_i_3 1 CellInInputs_i_3 PORT
+input Inputs_i_4 1 CellInInputs_i_4 PORT
+input Inputs_i_5 1 CellInInputs_i_5 PORT
+input Inputs_i_6 1 CellInInputs_i_6 PORT
+input Inputs_i_7 1 CellInInputs_i_7 PORT
+output Outputs_o_0 1 CellOutOutputs_o_0 PORT
+output Outputs_o_1 1 CellOutOutputs_o_1 PORT
+output Outputs_o_2 1 CellOutOutputs_o_2 PORT
+output Outputs_o_3 1 CellOutOutputs_o_3 PORT
+output Outputs_o_4 1 CellOutOutputs_o_4 PORT
+output Outputs_o_5 1 CellOutOutputs_o_5 PORT
+output Outputs_o_6 1 CellOutOutputs_o_6 PORT
+output Outputs_o_7 1 CellOutOutputs_o_7 PORT
+output ReconfModuleIRQs_o_0 1 CellOutReconfModuleIRQs_o_0 PORT
+output ReconfModuleIRQs_o_1 1 CellOutReconfModuleIRQs_o_1 PORT
+output ReconfModuleIRQs_o_2 1 CellOutReconfModuleIRQs_o_2 PORT
+output ReconfModuleIRQs_o_3 1 CellOutReconfModuleIRQs_o_3 PORT
+output ReconfModuleIRQs_o_4 1 CellOutReconfModuleIRQs_o_4 PORT
+output SPI_CPHA_o 1 CellOutSPI_CPHA_o PORT
+output SPI_CPOL_o 1 CellOutSPI_CPOL_o PORT
+output SPI_DataIn_o 8 CellOutSPI_DataIn_o PORT
+input SPI_DataOut_i 8 CellInSPI_DataOut_i PORT
+input SPI_FIFOEmpty_i 1 CellInSPI_FIFOEmpty_i PORT
+input SPI_FIFOFull_i 1 CellInSPI_FIFOFull_i PORT
+output SPI_LSBFE_o 1 CellOutSPI_LSBFE_o PORT
+output SPI_ReadNext_o 1 CellOutSPI_ReadNext_o PORT
+input SPI_Transmission_i 1 CellInSPI_Transmission_i PORT
+output SPI_Write_o 1 CellOutSPI_Write_o PORT
+input ReconfModuleIn_i_0 1 CellInReconfModuleIn_i_0 PORT
+input ReconfModuleIn_i_1 1 CellInReconfModuleIn_i_1 PORT
+input ReconfModuleIn_i_2 1 CellInReconfModuleIn_i_2 PORT
+input ReconfModuleIn_i_3 1 CellInReconfModuleIn_i_3 PORT
+input ReconfModuleIn_i_4 1 CellInReconfModuleIn_i_4 PORT
+input ReconfModuleIn_i_5 1 CellInReconfModuleIn_i_5 PORT
+input ReconfModuleIn_i_6 1 CellInReconfModuleIn_i_6 PORT
+input ReconfModuleIn_i_7 1 CellInReconfModuleIn_i_7 PORT
+output ReconfModuleOut_o_0 1 CellOutReconfModuleOut_o_0 PORT
+output ReconfModuleOut_o_1 1 CellOutReconfModuleOut_o_1 PORT
+output ReconfModuleOut_o_2 1 CellOutReconfModuleOut_o_2 PORT
+output ReconfModuleOut_o_3 1 CellOutReconfModuleOut_o_3 PORT
+output ReconfModuleOut_o_4 1 CellOutReconfModuleOut_o_4 PORT
+output ReconfModuleOut_o_5 1 CellOutReconfModuleOut_o_5 PORT
+output ReconfModuleOut_o_6 1 CellOutReconfModuleOut_o_6 PORT
+output ReconfModuleOut_o_7 1 CellOutReconfModuleOut_o_7 PORT
+input ParamIn_Word_i *16 CellParamIn_Word PORT
+output ParamOut_Word_o *16 CellParamOut_Word PORT
+input Clk_i 1 Counter .Clk_i Counter32 .Clk_i WordRegister .Clk_i ByteRegister .Clk_i TRFSM0 .Clk_i TRFSM1 .Clk_i
+input Reset_n_i 1 Counter .Reset_n_i Counter32 .Reset_n_i WordRegister .Reset_n_i ByteRegister .Reset_n_i TRFSM0 .Reset_n_i TRFSM1 .Reset_n_i
+input CfgMode_i 1 TRFSM0 .CfgMode_i TRFSM1 .CfgMode_i
+input CfgClk_TRFSM0_i *1 TRFSM0 .CfgClk_i
+input CfgClk_TRFSM1_i *1 TRFSM1 .CfgClk_i
+input CfgShift_TRFSM0_i *1 TRFSM0 .CfgShift_i
+input CfgShift_TRFSM1_i *1 TRFSM1 .CfgShift_i
+input CfgDataIn_i 1 TRFSM0 .CfgDataIn_i TRFSM1 .CfgDataIn_i
+output CfgDataOut_TRFSM0_o *1 TRFSM0 .CfgDataOut_o
+output CfgDataOut_TRFSM1_o *1 TRFSM1 .CfgDataOut_o
+headroom cellup CellInAdcConvComplete_i min 1
+headroom cellup CellInAdcValue_i min 1
+headroom cellup CellInI2C_Busy_i min 1
+headroom cellup CellInI2C_DataOut_i min 1
+headroom cellup CellInI2C_Error_i min 1
+headroom cellup CellInI2C_FIFOEmpty_i min 1
+headroom cellup CellInI2C_FIFOFull_i min 1
+headroom cellup CellInInputs_i_0 min 1
+headroom cellup CellInInputs_i_1 min 1
+headroom cellup CellInInputs_i_2 min 1
+headroom cellup CellInInputs_i_3 min 1
+headroom cellup CellInInputs_i_4 min 1
+headroom cellup CellInInputs_i_5 min 1
+headroom cellup CellInInputs_i_6 min 1
+headroom cellup CellInInputs_i_7 min 1
+headroom cellup CellInSPI_DataOut_i min 1
+headroom cellup CellInSPI_FIFOEmpty_i min 1
+headroom cellup CellInSPI_FIFOFull_i min 1
+headroom cellup CellInSPI_Transmission_i min 1
+headroom cellup CellInReconfModuleIn_i_0 min 1
+headroom cellup CellInReconfModuleIn_i_1 min 1
+headroom cellup CellInReconfModuleIn_i_2 min 1
+headroom cellup CellInReconfModuleIn_i_3 min 1
+headroom cellup CellInReconfModuleIn_i_4 min 1
+headroom cellup CellInReconfModuleIn_i_5 min 1
+headroom cellup CellInReconfModuleIn_i_6 min 1
+headroom cellup CellInReconfModuleIn_i_7 min 1
+headroom switchup Bit abs 1
+headroom switchup Byte abs 1
+headroom switchup Word abs 1
+headroom cellup TRFSM0 min 1
+headroom cellup TRFSM1 min 1
+headroom cellup CONST_Byte min 6
+headroom cellup WordMuxDual min 2
+headroom cellup WordRegister min 3
+headroom cellup CONST_Word min 1
+headroom cellup CellParamOut_Word min 2

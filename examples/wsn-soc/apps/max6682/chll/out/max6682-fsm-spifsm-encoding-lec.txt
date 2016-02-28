@@ -1,0 +1,11 @@
+.fromstates MAX6682_SPI_FSM_1/SPI_FSM_State_reg[2] MAX6682_SPI_FSM_1/SPI_FSM_State_reg[1] MAX6682_SPI_FSM_1/SPI_FSM_State_reg[0]
+.tostates State_o_reg[4] State_o_reg[3] State_o_reg[2] State_o_reg[1] State_o_reg[0]
+.begin
+000 00000
+100 00001
+010 00010
+110 00011
+001 00100
+101 00101
+011 00110
+.end

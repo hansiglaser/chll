@@ -1,0 +1,7 @@
+ExtADC -- Sensor Interface to an External ADC
+---------------------------------------------
+
+ - 1st FSM to query one value from the external ADC
+ - 2nd FSM to request a new measurement and compare with old value
+ - both FSMs are implemented within the ExtADC top module
+ - this application does identical post-processing as ADT7310 and MAX6682

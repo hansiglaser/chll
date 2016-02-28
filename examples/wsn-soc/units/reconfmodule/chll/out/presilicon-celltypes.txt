@@ -1,0 +1,39 @@
+### Cell Types
+celltype Counter Bit ResetSig_i Bit Preset_i Bit Enable_i Bit Direction_i Word PresetVal_i Word *D_o Bit *Overflow_o Bit *Zero_o
+celltype Counter32 Bit ResetSig_i Bit Preset_i Bit Enable_i Bit Direction_i Word PresetValH_i Word PresetValL_i Word *DH_o Word *DL_o Bit *Overflow_o Bit *Zero_o
+celltype AbsDiff Word A_i Word B_i Word *D_o
+celltype WordRegister Word D_i Word *Q_o Bit Enable_i
+celltype ByteRegister Byte D_i Byte *Q_o Bit Enable_i
+celltype AddSubCmp Bit AddOrSub_i Word A_i Word B_i Word *D_o Bit Carry_i Bit *Carry_o Bit *Zero_o Bit *Sign_o Bit *Overflow_o
+celltype ByteMuxOct Byte A_i Byte B_i Byte C_i Byte D_i Byte E_i Byte F_i Byte G_i Byte H_i Bit SAB_i Bit SC_i Bit SD_i Bit SE_i Bit SF_i Bit SG_i Bit SH_i Byte *Y_o
+celltype ByteMuxQuad Byte A_i Byte B_i Byte C_i Byte D_i Bit SAB_i Bit SC_i Bit SD_i Byte *Y_o
+celltype ByteMuxDual Byte A_i Byte B_i Bit S_i Byte *Y_o
+celltype Byte2Word Byte H_i Byte L_i Word *Y_o
+celltype Byte2WordSel Byte H_i Byte L_i Word *Y_o cfg:4 Shift_i cfg:4 Mask_i
+celltype WordMuxDual Word A_i Word B_i Bit S_i Word *Y_o
+celltype TRFSM0 Bit In0_i Bit In1_i Bit In2_i Bit In3_i Bit In4_i Bit In5_i Bit *Out0_o Bit *Out1_o Bit *Out2_o Bit *Out3_o Bit *Out4_o Bit *Out5_o Bit *Out6_o Bit *Out7_o Bit *Out8_o Bit *Out9_o
+celltype TRFSM1 Bit In0_i Bit In1_i Bit In2_i Bit In3_i Bit In4_i Bit In5_i Bit In6_i Bit In7_i Bit In8_i Bit In9_i Bit *Out0_o Bit *Out1_o Bit *Out2_o Bit *Out3_o Bit *Out4_o Bit *Out5_o Bit *Out6_o Bit *Out7_o Bit *Out8_o Bit *Out9_o Bit *Out10_o Bit *Out11_o Bit *Out12_o Bit *Out13_o Bit *Out14_o
+# Special Cell Types for Constant Values
+celltype CONST_Bit Bit *Value_o cfg:1 CfgValue_i
+celltype CONST_Byte Byte *Value_o cfg:8 CfgValue_i
+celltype CONST_Word Word *Value_o cfg:16 CfgValue_i
+# Special Cell Types for Param Values
+celltype !CellParamIn_Word Word *PORT
+input ParamIn_Word_i *16 CellParamIn_Word PORT
+celltype !CellParamOut_Word Word PORT
+output ParamOut_Word_o *16 CellParamOut_Word PORT
+
+### Direct Ports
+input Clk_i 1 Counter .Clk_i Counter32 .Clk_i WordRegister .Clk_i ByteRegister .Clk_i TRFSM0 .Clk_i TRFSM1 .Clk_i
+input Reset_n_i 1 Counter .Reset_n_i Counter32 .Reset_n_i WordRegister .Reset_n_i ByteRegister .Reset_n_i TRFSM0 .Reset_n_i TRFSM1 .Reset_n_i
+
+### Config Chains
+input CfgMode_i 1 TRFSM0 .CfgMode_i TRFSM1 .CfgMode_i
+input CfgClk_TRFSM0_i *1 TRFSM0 .CfgClk_i
+input CfgClk_TRFSM1_i *1 TRFSM1 .CfgClk_i
+
+input CfgShift_TRFSM0_i *1 TRFSM0 .CfgShift_i
+input CfgShift_TRFSM1_i *1 TRFSM1 .CfgShift_i
+input CfgDataIn_i 1 TRFSM0 .CfgDataIn_i TRFSM1 .CfgDataIn_i
+output CfgDataOut_TRFSM0_o *1 TRFSM0 .CfgDataOut_o
+output CfgDataOut_TRFSM1_o *1 TRFSM1 .CfgDataOut_o

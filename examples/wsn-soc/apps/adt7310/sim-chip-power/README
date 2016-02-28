@@ -1,0 +1,40 @@
+How to do power analysis?
+-------------------------
+1) Generate the vsim.do QuestaSim script, e.g.:
+   $ ./sim.sh -max Testchip2CHLL-ADT7310
+
+2) Setup the testpoints in power-testpoints.tcl or change the name of the
+   sourced testpoint file in vsim.do to another file.
+
+3) Execute QuestaSim:
+   $ vsim -do vsim.do &
+   and watch the VCD file growing
+   $ dir /opt/tmp/test.vcd.gz
+   During simulation, "vcd2saif" command lines are printed and saved in the
+   QuestaSim "transcript" file, so be sure this is enabled. This also
+   includes the start and end times of the interesting intervals.
+
+4) Generate a script to convert the VCD file to SAIF files:
+   $ grep vcd2saif transcript | cut -d' ' -f 3- > /tmp/vcd2saif-1.sh
+   $ cat /tmp/vcd2saif-1.sh
+   and quit QuestaSim to avoid invalid GZip file ending.
+
+5) Convert the VCD file to SAIF files:
+   $ export PATH=$PATH:/path/to/dc/2009_06/bin
+   $ . /tmp/vcd2saif-1.sh
+
+6) Adapt the Power Analysis script for DesignCompiler (and ensure it has the
+   same setup as used during simulation).
+
+7) Execute the Power Analysis in ../../../power/run/:
+   $ ./run.sh
+
+TODOs:
+------
+ - Save the "vcd2saif" command lines to a dedicated script file so no "grep"
+   stuff is required.
+ - Or even better, directly execute the vcd2saif command, because this is a
+   bit faster for the first few testpoints because the VCD file is not that
+   big yet. But a problem could be that the VCD file is written block-wise
+   and its end doesn't comply to the GZip format before QuestaSim is
+   stopped.
