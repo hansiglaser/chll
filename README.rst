@@ -65,7 +65,7 @@ Besides the tools provided in this project, the design flow also uses external
 tools.
 
 **Yosys Open SYnthesis Suite**
-Yosys is a free framework for Verilog RTL synthesis by Clifford Wolf.
+  Yosys is a free framework for Verilog RTL synthesis by Clifford Wolf.
 
   http://www.clifford.at/yosys/
 
@@ -89,12 +89,13 @@ http://opencores.org/project,openmsp430 using its SVN revision 191 at
 ``./examples/wsn-soc/units/openmsp430/``.
 
 Modifications:
- - removed ``sync_cell_mclk_wkup`` in ``omsp_clock_module.v``
- - adapted ``openMSP430_defines.v`` to the requirements of the WSN SoC
- - added ``omsp_clock_gate-dlsg1.v`` with process specific standard cell
- - cherry picked a bug fix in the ``omsp_uart.v`` from OpenMSP430 rev. 197
- - use Verilog define HIER_MODULE instead of hard coded hierarchical signal
-   name in ``msp_debug.v``
+
+- removed ``sync_cell_mclk_wkup`` in ``omsp_clock_module.v``
+- adapted ``openMSP430_defines.v`` to the requirements of the WSN SoC
+- added ``omsp_clock_gate-dlsg1.v`` with process specific standard cell
+- cherry picked a bug fix in the ``omsp_uart.v`` from OpenMSP430 rev. 197
+- use Verilog define HIER_MODULE instead of hard coded hierarchical signal
+  name in ``msp_debug.v``
 
 Serial Bus Masters
 ------------------
@@ -104,9 +105,9 @@ designs were slightly modified and placed in
 ``./examples/wsn-soc/units/*_master/``. Additionally, some testbenches use an
 UART core located in ``./examples/wsn-soc/vhdl_packs/units/core/tb/uart/``.
 
- - SPI Master and FIFO by Georg Blemenschitz
- - I²C Master by Mario Faschang
- - UART by Armin Faltinger
+- SPI Master and FIFO by Georg Blemenschitz
+- I²C Master by Mario Faschang
+- UART by Armin Faltinger
 
 The initial design of the WSN SoC included more bus masters, but these were
 removed due to chip area constraints. In some source files there are commented
@@ -118,13 +119,13 @@ Documentation
 
 The documentation for this project is stored in ``./doc/``.
 
- - ``abstract.pdf`` and its sources in ``./doc/abstract/`` is a short
-   introduction and motivation of this work and the PhD thesis.
- - TODO: PhD thesis [Gla15], especially Ch. 3, Ch. 4, and Sec. 5.1
- - TODO: journal paper with a condensed introduction to the design methodology
- - TODO: tutorial for the design flow
- - ``bibliography.bib``: BibTeX file with the scientific publications of the
-   author
+- ``abstract.pdf`` and its sources in ``./doc/abstract/`` is a short
+  introduction and motivation of this work and the PhD thesis.
+- TODO: PhD thesis [Gla15], especially Ch. 3, Ch. 4, and Sec. 5.1
+- TODO: journal paper with a condensed introduction to the design methodology
+- TODO: tutorial for the design flow
+- ``bibliography.bib``: BibTeX file with the scientific publications of the
+  author
 
 
 Build Instructions
@@ -132,23 +133,23 @@ Build Instructions
 
 Prerequisites
 -------------
- - The design flow is operated from a Linux shell.
- - GNU **Make**
- - **FreePascal** compiler, version 2.6.4 was used
- - TP Lex and TP Yacc as ``plex`` and ``pyacc``, which are included in the
-   FreePascal utilities (e.g. Debian package ``fp-utils-2.6.4``).
-   http://www.musikwissenschaft.uni-mainz.de/~ag/tply/
- - The tool FlowCmd requires GNU Bash 4.0 or newer.
- - The tools FlowProc and TrfsmGen were developed with the Lazarus IDE but this
-   is not required to build.
- - ``pas-tcl`` in ``./tools/common/pas-tcl/`` and ``pas-readline`` in
-   ``./tools/common/pas-readline/``. Both projects are referenced using Git
-   Submodules, see below.
- - GNU Readline development files
- - Tcl development files
- - **Ronn** to generate the man pages for FlowProc and TrfsmGen (e.g.,
-   https://rubygems.org/gems/ronn/, http://rtomayko.github.io/ronn/, or the
-   Debian package ``ruby-ronn``)
+- The design flow is operated from a Linux shell.
+- GNU **Make**
+- **FreePascal** compiler, version 2.6.4 was used
+- TP Lex and TP Yacc as ``plex`` and ``pyacc``, which are included in the
+  FreePascal utilities (e.g. Debian package ``fp-utils-2.6.4``).
+  http://www.musikwissenschaft.uni-mainz.de/~ag/tply/
+- The tool FlowCmd requires GNU Bash 4.0 or newer.
+- The tools FlowProc and TrfsmGen were developed with the Lazarus IDE but this
+  is not required to build.
+- ``pas-tcl`` in ``./tools/common/pas-tcl/`` and ``pas-readline`` in
+  ``./tools/common/pas-readline/``. Both projects are referenced using Git
+  Submodules, see below.
+- GNU Readline development files
+- Tcl development files
+- **Ronn** to generate the man pages for FlowProc and TrfsmGen (e.g.,
+  https://rubygems.org/gems/ronn/, http://rtomayko.github.io/ronn/, or the
+  Debian package ``ruby-ronn``)
 
 FlowCmd
 -------
@@ -353,11 +354,11 @@ configuration data.
 
 TODO
 ====
- - install the design flow tools at central system directories, this also
-   requires the automatic adaption of links in ``./tools/flowcmd/flow``.
- - document all functions of FlowProc and TrfsmGen with individual man pages
- - several VHDL modules (e.g., the serial bus masters) have Scan* ports which
-   are unused and should be removed
+- install the design flow tools at central system directories, this also
+  requires the automatic adaption of links in ``./tools/flowcmd/flow``.
+- document all functions of FlowProc and TrfsmGen with individual man pages
+- several VHDL modules (e.g., the serial bus masters) have Scan* ports which
+  are unused and should be removed
 
 
 References
