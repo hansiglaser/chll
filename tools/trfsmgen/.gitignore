@@ -5,8 +5,8 @@ man
 *.lps
 *.res
 *.ppu
+*.o
 s27.il
 s27.v
 s27-yosys.kiss
-
-
+*~

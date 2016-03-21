@@ -5,6 +5,7 @@ backup
 flowproc
 man
 *.ppu
+*.o
 *.lps
 testnetlist
 ilang-lex.pas
@@ -14,4 +15,4 @@ liberty-token.pas
 liberty-parser.pas
 testliberty
 .*.swp
-
+*~
