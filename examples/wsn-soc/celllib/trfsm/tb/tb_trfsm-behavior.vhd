@@ -281,18 +281,18 @@ begin  -- behavior
     -- assert false report "ConfigBitStream = " & Vector2String(ConfigBitStream) severity note;
     CfgMode_i <= '1';
     CfgShift_i <= '1';
-    wait for CfgClkHalfPeriode;         -- strange, ModelSim needs this :-(
+    wait for CfgClkHalfPeriode;
     for i in 0 to ConfigLength-1 loop
       CfgDataIn_i <= ConfigBitStream(i);
-      wait for 1 ns;                    -- strange, ModelSim needs this :-(
+      wait for SetupNextInputDelay;
       CfgClk_i <= '1';
       wait for CfgClkHalfPeriode;
       CfgClk_i <= '0';
-      wait for CfgClkHalfPeriode;
+      wait for CfgClkHalfPeriode-SetupNextInputDelay;
     end loop;  -- i
     CfgMode_i <= '0';
     CfgShift_i <= '0';
-    wait for 1 ns;                      -- strange, ModelSim needs this :-(
+    wait for CheckOutputDelay;
 
     assert false report "### Configuration done" severity note;
     -- 127129ns

@@ -129,10 +129,11 @@ begin  -- behavior
     CfgShift_i <= '1';
     for i in 0 to ConfigLength-1 loop
       CfgDataIn_i <= ConfigBitStream(i);
+      wait for SetupNextInputDelay;
       CfgClk_i <= '1';
       wait for CfgClkHalfPeriode;
       CfgClk_i <= '0';
-      wait for CfgClkHalfPeriode;
+      wait for CfgClkHalfPeriode-SetupNextInputDelay;
     end loop;  -- i
     CfgMode_i  <= '0';
     CfgShift_i <= '0';

@@ -54,10 +54,11 @@ architecture behavior of tb_InputSwitchingMatrix is
     CfgShift <= '1';
     for i in 0 to ConfigBitStream'length-1 loop
       CfgDataIn <= ConfigBitStream(i);
+      wait for SetupNextInputDelay;
       CfgClk <= '1';
       wait for CfgClkHalfPeriode;
       CfgClk <= '0';
-      wait for CfgClkHalfPeriode;
+      wait for CfgClkHalfPeriode-SetupNextInputDelay;
     end loop;  -- i
     CfgMode  <= '0';
     CfgShift <= '0';

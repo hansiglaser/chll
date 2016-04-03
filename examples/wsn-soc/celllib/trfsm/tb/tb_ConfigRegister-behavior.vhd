@@ -8,8 +8,10 @@ use ieee.std_logic_1164.all;
 use IEEE.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 use ieee.math_real.all;
+library work;
 use work.trfsmparts.all;
 use work.tbfuncs.all;
+use work.Config.all;
 
 -------------------------------------------------------------------------------
 
@@ -55,10 +57,11 @@ architecture behavior of tb_ConfigRegister is
     for i in 0 to NewBitStream'length-1 loop
       CfgDataIn <= NewBitStream(i);
       OldBitStream(i) := CfgDataOut;
+      wait for SetupNextInputDelay;
       CfgClk <= '1';
       wait for CfgClkHalfPeriode;
       CfgClk <= '0';
-      wait for CfgClkHalfPeriode;
+      wait for CfgClkHalfPeriode-SetupNextInputDelay;
     end loop;  -- i
   end Configure;
 
@@ -137,14 +140,16 @@ begin  -- behavior
     CfgMode_i <= '1';
     wait for CheckOutputDelay;
     CheckOutput(OutputA,Output_o);
-    -- shift in the config bit stream without CfgShift_i, Output_o must stay the same
     OutputB := CreateBitStream(Width,8395931,123456789);
-    Configure(OutputB,OutputC,CfgMode_i,CfgClk_i,CfgDataIn_i,CfgDataOut_o);
-    assert OutputC = OutputA report "Shifted out some bit stream " & Vector2String(OutputC) & ", should be " & Vector2String(OutputA) severity error;
-    CfgMode_i <= '0';
-    wait for CheckOutputDelay;
-    CheckOutput(OutputA,Output_o);   -- should still be old value
-    CfgMode_i  <= '1';
+    if not CfgClkGating then
+      -- shift in the config bit stream without CfgShift_i, Output_o must stay the same
+      Configure(OutputB,OutputC,CfgMode_i,CfgClk_i,CfgDataIn_i,CfgDataOut_o);
+      assert OutputC = OutputA report "Shifted out some bit stream " & Vector2String(OutputC) & ", should be " & Vector2String(OutputA) severity error;
+      CfgMode_i <= '0';
+      wait for CheckOutputDelay;
+      CheckOutput(OutputA,Output_o);   -- should still be old value
+      CfgMode_i  <= '1';
+    end if;
     CfgShift_i <= '1';   -- now for real
     -- shift in the config bit stream, Output_o must stay the same
     Configure(OutputB,OutputC,CfgMode_i,CfgClk_i,CfgDataIn_i,CfgDataOut_o);
@@ -154,13 +159,15 @@ begin  -- behavior
     CfgMode_i <= '0';
     wait for CheckOutputDelay;
     CheckOutput(OutputB,Output_o);
-    -- assert CfgClk -> nothing should change
-    CfgClk_i <= '1';
-    wait for CfgClkHalfPeriode;
-    CheckOutput(OutputB,Output_o);
-    CfgClk_i <= '0';
-    wait for CfgClkHalfPeriode;
-    CheckOutput(OutputB,Output_o);
+    if not CfgClkGating then
+      -- assert CfgClk -> nothing should change
+      CfgClk_i <= '1';
+      wait for CfgClkHalfPeriode;
+      CheckOutput(OutputB,Output_o);
+      CfgClk_i <= '0';
+      wait for CfgClkHalfPeriode;
+      CheckOutput(OutputB,Output_o);
+    end if;
     -- Reset => everything 0
     Reset_n_i <= '0';
     wait for 1 us;
